@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Запись</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #FBF1EE;
+    --card: #FFFFFF;
+    --ink: #3B2A2E;
+    --ink-soft: #8C7378;
+    --rose: #C8788A;
+    --rose-deep: #9C4E62;
+    --rose-pale: #F3DCE1;
+    --line: #EEDCE0;
+    --success: #7E9B76;
+    --danger: #B85C5C;
+    --shadow: 0 8px 24px rgba(156, 78, 98, 0.12);
+    --radius: 20px;
+  }
+
+  *{ box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Manrope', sans-serif;
+    min-height: 100vh;
+    padding-bottom: 100px;
+    overflow-x: hidden;
+  }
+
+  .petal-bg{
+    position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden;
+  }
+  .petal-bg span{
+    position: absolute; font-size: 22px; opacity: .25; top: -10%;
+    animation: fall linear infinite;
+  }
+  @keyframes fall{
+    to { transform: translateY(120vh) rotate(360deg); }
+  }
+
+  header{
+    padding: 28px 20px 18px;
+    text-align: center;
+  }
+  header h1{
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 28px;
+    margin: 0 0 4px;
+    color: var(--rose-deep);
+    letter-spacing: 0.2px;
+  }
+  header p{
+    margin: 0;
+    color: var(--ink-soft);
+    font-size: 14px;
+  }
+
+  .steps{
+    display: flex; justify-content: center; gap: 6px; margin: 14px 0 4px;
+  }
+  .steps .dot{
+    width: 7px; height: 7px; border-radius: 50%; background: var(--line);
+    transition: all .3s;
+  }
+  .steps .dot.active{ background: var(--rose); width: 18px; border-radius: 4px; }
+  .steps .dot.done{ background: var(--rose-pale); }
+
+  main{
+    padding: 12px 16px;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  .screen{ display: none; animation: fadeIn .35s ease; }
+  .screen.active{ display: block; }
+  @keyframes fadeIn{ from{ opacity:0; transform: translateY(8px);} to{ opacity:1; transform: translateY(0);} }
+
+  .section-label{
+    font-size: 13px; color: var(--ink-soft); text-transform: uppercase;
+    letter-spacing: 0.08em; margin: 18px 4px 10px; font-weight: 600;
+  }
+
+  /* ---- Календарь дней ---- */
+  .day-scroll{
+    display: flex; gap: 10px; overflow-x: auto; padding: 4px 2px 10px;
+    scroll-snap-type: x mandatory;
+  }
+  .day-scroll::-webkit-scrollbar{ display:none; }
+  .day-card{
+    flex: 0 0 64px; scroll-snap-align: start;
+    background: var(--card); border: 1.5px solid var(--line); border-radius: 16px;
+    padding: 12px 0 10px; text-align: center; cursor: pointer;
+    transition: all .2s; position: relative;
+  }
+  .day-card .wd{ font-size: 11px; color: var(--ink-soft); text-transform: uppercase; }
+  .day-card .num{ font-family: 'Fraunces', serif; font-size: 22px; margin: 2px 0; }
+  .day-card .mo{ font-size: 10px; color: var(--ink-soft); }
+  .day-card.selected{
+    background: var(--rose-deep); border-color: var(--rose-deep);
+    box-shadow: var(--shadow); transform: translateY(-2px);
+  }
+  .day-card.selected .wd, .day-card.selected .mo{ color: var(--rose-pale); }
+  .day-card.selected .num{ color: #fff; }
+  .day-card.has-slots::after{
+    content: ''; position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%);
+    width: 4px; height: 4px; border-radius: 50%; background: var(--rose);
+  }
+  .day-card.selected.has-slots::after{ background: #fff; }
+
+  /* ---- Слоты времени ---- */
+  .time-grid{
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+  }
+  .time-slot{
+    background: var(--card); border: 1.5px solid var(--line); border-radius: 14px;
+    padding: 12px 0; text-align: center; font-weight: 600; font-size: 15px;
+    cursor: pointer; transition: all .15s;
+  }
+  .time-slot:active{ transform: scale(0.96); }
+  .time-slot.selected{
+    background: var(--rose); border-color: var(--rose); color: #fff;
+    box-shadow: var(--shadow);
+  }
+  .empty-state{
+    text-align: center; padding: 40px 20px; color: var(--ink-soft);
+  }
+  .empty-state .emoji{ font-size: 36px; margin-bottom: 8px; }
+
+  /* ---- Форма ---- */
+  .field{ margin-bottom: 14px; }
+  .field label{
+    display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--ink-soft);
+  }
+  .field input, .field textarea{
+    width: 100%; padding: 13px 14px; border-radius: 14px; border: 1.5px solid var(--line);
+    background: var(--card); font-family: inherit; font-size: 15px; color: var(--ink);
+    outline: none; transition: border-color .15s;
+  }
+  .field input:focus, .field textarea:focus{ border-color: var(--rose); }
+
+  .summary-card{
+    background: var(--card); border-radius: var(--radius); padding: 18px;
+    box-shadow: var(--shadow); margin-bottom: 18px;
+  }
+  .summary-row{
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 0; font-size: 15px;
+  }
+  .summary-row + .summary-row{ border-top: 1px solid var(--line); }
+  .summary-row .k{ color: var(--ink-soft); font-size: 13px; }
+  .summary-row .v{ font-weight: 600; }
+
+  /* ---- Кнопки ---- */
+  .btn{
+    display: block; width: 100%; padding: 16px; border-radius: 16px; border: none;
+    font-family: inherit; font-weight: 700; font-size: 16px; cursor: pointer;
+    transition: all .15s; text-align: center;
+  }
+  .btn:active{ transform: scale(0.98); }
+  .btn-primary{ background: var(--rose-deep); color: #fff; box-shadow: var(--shadow); }
+  .btn-primary:disabled{ background: var(--line); color: var(--ink-soft); box-shadow: none; cursor: not-allowed; }
+  .btn-ghost{ background: transparent; color: var(--ink-soft); margin-top: 10px; }
+  .btn-danger-outline{ background: #fff; color: var(--danger); border: 1.5px solid var(--danger); }
+
+  .bottom-bar{
+    position: fixed; bottom: 0; left: 0; right: 0; padding: 14px 16px;
+    background: linear-gradient(to top, var(--bg) 60%, transparent);
+  }
+  .bottom-bar-inner{ max-width: 480px; margin: 0 auto; }
+
+  /* ---- Мои записи ---- */
+  .booking-card{
+    background: var(--card); border-radius: var(--radius); padding: 16px;
+    box-shadow: var(--shadow); margin-bottom: 12px;
+  }
+  .booking-card .date{
+    font-family: 'Fraunces', serif; font-size: 19px; color: var(--rose-deep); margin-bottom: 2px;
+  }
+  .booking-card .meta{ color: var(--ink-soft); font-size: 13px; margin-bottom: 12px; }
+  .booking-actions{ display: flex; gap: 8px; }
+  .booking-actions button{
+    flex: 1; padding: 10px; border-radius: 12px; border: 1.5px solid var(--line);
+    background: #fff; font-weight: 600; font-size: 13px; cursor: pointer;
+  }
+  .booking-actions .b-cancel{ color: var(--danger); border-color: #f0d6d6; }
+  .booking-actions .b-resched{ color: var(--rose-deep); border-color: var(--rose-pale); }
+
+  .toast{
+    position: fixed; top: 16px; left: 50%; transform: translateX(-50%) translateY(-120%);
+    background: var(--ink); color: #fff; padding: 12px 20px; border-radius: 14px;
+    font-size: 14px; font-weight: 600; z-index: 100; transition: transform .3s ease;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+  }
+  .toast.show{ transform: translateX(-50%) translateY(0); }
+  .toast.success{ background: var(--success); }
+  .toast.error{ background: var(--danger); }
+
+  .nav-tabs{
+    display: flex; gap: 8px; margin-bottom: 6px;
+  }
+  .nav-tabs button{
+    flex: 1; padding: 10px; border-radius: 12px; border: none; background: transparent;
+    font-weight: 700; font-size: 14px; color: var(--ink-soft); cursor: pointer;
+  }
+  .nav-tabs button.active{ background: var(--card); color: var(--rose-deep); box-shadow: var(--shadow); }
+
+  .loader{
+    display: flex; justify-content: center; padding: 40px;
+  }
+  .loader .spin{
+    width: 28px; height: 28px; border-radius: 50%;
+    border: 3px solid var(--rose-pale); border-top-color: var(--rose-deep);
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin{ to{ transform: rotate(360deg); } }
+
+  .success-screen{
+    text-align: center; padding: 30px 10px;
+  }
+  .success-screen .big-emoji{
+    font-size: 64px; animation: pop .5s ease;
+  }
+  @keyframes pop{ 0%{ transform: scale(0); } 60%{ transform: scale(1.15); } 100%{ transform: scale(1); } }
+  .success-screen h2{ font-family: 'Fraunces', serif; font-size: 24px; color: var(--rose-deep); margin: 12px 0 6px; }
+  .success-screen p{ color: var(--ink-soft); margin: 0 0 24px; }
+</style>
+</head>
+<body>
+
+<div class="petal-bg" id="petalBg"></div>
+
+<header>
+  <h1>🌸 Запись</h1>
+  <p id="headerSub">Выбери удобное время</p>
+</header>
+
+<main>
+  <div class="nav-tabs">
+    <button class="active" id="tabNew" onclick="showTab('new')">Новая запись</button>
+    <button id="tabMy" onclick="showTab('my')">Мои записи</button>
+  </div>
+
+  <!-- ЭКРАН: НОВАЯ ЗАПИСЬ -->
+  <div id="flowNew">
+    <div class="steps">
+      <div class="dot active" id="dot1"></div>
+      <div class="dot" id="dot2"></div>
+      <div class="dot" id="dot3"></div>
+    </div>
+
+    <!-- Шаг 1: выбор дня -->
+    <div class="screen active" id="screenDay">
+      <div class="section-label">Выбери день</div>
+      <div class="day-scroll" id="dayScroll"></div>
+      <div class="section-label" id="timeLabel" style="display:none">Выбери время</div>
+      <div class="time-grid" id="timeGrid"></div>
+      <div id="loaderSlots" class="loader"><div class="spin"></div></div>
+    </div>
+
+    <!-- Шаг 2: данные -->
+    <div class="screen" id="screenForm">
+      <div class="summary-card" id="formSummary"></div>
+      <div class="field">
+        <label>Какая услуга? (необязательно)</label>
+        <input type="text" id="inputService" placeholder="Например, маникюр">
+      </div>
+      <div class="field">
+        <label>Телефон (необязательно)</label>
+        <input type="tel" id="inputPhone" placeholder="+7 999 000-00-00">
+      </div>
+    </div>
+
+    <!-- Шаг 3: успех -->
+    <div class="screen" id="screenSuccess">
+      <div class="success-screen">
+        <div class="big-emoji">🌸</div>
+        <h2>Готово!</h2>
+        <p id="successText">Запись подтверждена</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ЭКРАН: МОИ ЗАПИСИ -->
+  <div id="flowMy" style="display:none">
+    <div id="myList"></div>
+  </div>
+
+  <!-- ЭКРАН: ПЕРЕНОС -->
+  <div id="flowReschedule" style="display:none">
+    <div class="section-label">Перенос записи · выбери новый день</div>
+    <div class="day-scroll" id="reschedDayScroll"></div>
+    <div class="section-label" id="reschedTimeLabel" style="display:none">Выбери время</div>
+    <div class="time-grid" id="reschedTimeGrid"></div>
+  </div>
+</main>
+
+<div class="bottom-bar" id="bottomBar">
+  <div class="bottom-bar-inner">
+    <button class="btn btn-primary" id="mainBtn" onclick="onMainBtn()" disabled>Выбери время</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const tg = window.Telegram?.WebApp;
+if (tg) { tg.ready(); tg.expand(); }
+
+const API = ''; // тот же домен
+
+let state = {
+  tab: 'new',
+  step: 1,
+  slots: [],
+  selectedDate: null,
+  selectedSlotId: null,
+  myBookings: [],
+  reschedulingBookingId: null,
+};
+
+// ---------- petals decoration ----------
+function spawnPetals(){
+  const container = document.getElementById('petalBg');
+  const emojis = ['🌸','🌷','💗'];
+  for (let i=0;i<10;i++){
+    const s = document.createElement('span');
+    s.textContent = emojis[i % emojis.length];
+    s.style.left = (Math.random()*100) + '%';
+    s.style.animationDuration = (12 + Math.random()*10) + 's';
+    s.style.animationDelay = (Math.random()*10) + 's';
+    s.style.fontSize = (14 + Math.random()*14) + 'px';
+    container.appendChild(s);
+  }
+}
+spawnPetals();
+
+// ---------- toast ----------
+function toast(msg, type='') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show ' + type;
+  setTimeout(() => el.classList.remove('show'), 2400);
+}
+
+// ---------- api helper ----------
+async function api(path, body) {
+  const initData = tg ? tg.initData : '';
+  const res = await fetch(API + path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ...body, initData }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw data;
+  return data;
+}
+
+const RU_WEEKDAYS = ['вс','пн','вт','ср','чт','пт','сб'];
+const RU_MONTHS = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+const RU_MONTHS_FULL = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+
+function formatDateLabel(iso) {
+  const d = new Date(iso + 'T00:00:00');
+  return { wd: RU_WEEKDAYS[d.getDay()], num: d.getDate(), mo: RU_MONTHS[d.getMonth()] };
+}
+function formatDateFull(iso) {
+  const d = new Date(iso + 'T00:00:00');
+  return `${d.getDate()} ${RU_MONTHS_FULL[d.getMonth()]}`;
+}
+
+// ---------- tabs ----------
+function showTab(tab) {
+  state.tab = tab;
+  document.getElementById('tabNew').classList.toggle('active', tab === 'new');
+  document.getElementById('tabMy').classList.toggle('active', tab === 'my');
+  document.getElementById('flowNew').style.display = tab === 'new' ? '' : 'none';
+  document.getElementById('flowMy').style.display = tab === 'my' ? '' : 'none';
+  document.getElementById('flowReschedule').style.display = 'none';
+
+  if (tab === 'new') {
+    goToStep(1);
+    document.getElementById('headerSub').textContent = 'Выбери удобное время';
+    updateMainBtn();
+  } else {
+    document.getElementById('headerSub').textContent = 'Перенос или отмена';
+    loadMyBookings();
+  }
+}
+
+// ---------- load slots ----------
+async function loadSlots() {
+  document.getElementById('loaderSlots').style.display = 'flex';
+  try {
+    const res = await fetch(API + '/api/slots');
+    const data = await res.json();
+    state.slots = data.slots || [];
+    renderDays();
+  } catch (e) {
+    toast('Не удалось загрузить слоты', 'error');
+  } finally {
+    document.getElementById('loaderSlots').style.display = 'none';
+  }
+}
+
+function renderDays() {
+  const dayScroll = document.getElementById('dayScroll');
+  dayScroll.innerHTML = '';
+  const dates = [...new Set(state.slots.map(s => s.slot_date))].sort();
+
+  if (dates.length === 0) {
+    dayScroll.innerHTML = '<div class="empty-state" style="width:100%"><div class="emoji">🌷</div>Свободных дат пока нет<br>Загляни чуть позже</div>';
+    return;
+  }
+
+  dates.forEach(d => {
+    const lbl = formatDateLabel(d);
+    const card = document.createElement('div');
+    card.className = 'day-card has-slots' + (state.selectedDate === d ? ' selected' : '');
+    card.innerHTML = `<div class="wd">${lbl.wd}</div><div class="num">${lbl.num}</div><div class="mo">${lbl.mo}</div>`;
+    card.onclick = () => selectDay(d);
+    dayScroll.appendChild(card);
+  });
+
+  if (!state.selectedDate && dates.length) selectDay(dates[0]);
+}
+
+function selectDay(d) {
+  state.selectedDate = d;
+  state.selectedSlotId = null;
+  renderDays();
+  renderTimes();
+  updateMainBtn();
+}
+
+function renderTimes() {
+  const grid = document.getElementById('timeGrid');
+  const label = document.getElementById('timeLabel');
+  grid.innerHTML = '';
+  const daySlots = state.slots.filter(s => s.slot_date === state.selectedDate);
+  if (!daySlots.length) { label.style.display = 'none'; return; }
+  label.style.display = '';
+  daySlots.forEach(s => {
+    const el = document.createElement('div');
+    el.className = 'time-slot' + (state.selectedSlotId === s.id ? ' selected' : '');
+    el.textContent = s.slot_time;
+    el.onclick = () => { state.selectedSlotId = s.id; renderTimes(); updateMainBtn(); };
+    grid.appendChild(el);
+  });
+}
+
+function updateMainBtn() {
+  const btn = document.getElementById('mainBtn');
+  if (state.step === 1) {
+    btn.disabled = !state.selectedSlotId;
+    btn.textContent = state.selectedSlotId ? 'Продолжить' : 'Выбери время';
+  } else if (state.step === 2) {
+    btn.disabled = false;
+    btn.textContent = 'Подтвердить запись';
+  } else if (state.step === 3) {
+    btn.disabled = false;
+    btn.textContent = 'Готово';
+  }
+}
+
+function goToStep(n) {
+  state.step = n;
+  ['screenDay','screenForm','screenSuccess'].forEach((id, i) => {
+    document.getElementById(id).classList.toggle('active', i === n - 1);
+  });
+  ['dot1','dot2','dot3'].forEach((id, i) => {
+    const el = document.getElementById(id);
+    el.classList.remove('active','done');
+    if (i + 1 < n) el.classList.add('done');
+    if (i + 1 === n) el.classList.add('active');
+  });
+  document.getElementById('bottomBar').style.display = n === 3 ? 'none' : '';
+  updateMainBtn();
+}
+
+async function onMainBtn() {
+  if (state.step === 1) {
+    const slot = state.slots.find(s => s.id === state.selectedSlotId);
+    document.getElementById('formSummary').innerHTML = `
+      <div class="summary-row"><span class="k">Дата</span><span class="v">${formatDateFull(slot.slot_date)}</span></div>
+      <div class="summary-row"><span class="k">Время</span><span class="v">${slot.slot_time}</span></div>
+    `;
+    goToStep(2);
+  } else if (state.step === 2) {
+    const btn = document.getElementById('mainBtn');
+    btn.disabled = true; btn.textContent = 'Записываю...';
+    try {
+      await api('/api/book', {
+        slot_id: state.selectedSlotId,
+        service: document.getElementById('inputService').value,
+        phone: document.getElementById('inputPhone').value,
+      });
+      const slot = state.slots.find(s => s.id === state.selectedSlotId);
+      document.getElementById('successText').textContent =
+        `Жду тебя ${formatDateFull(slot.slot_date)} в ${slot.slot_time} 🌸`;
+      goToStep(3);
+      if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+    } catch (e) {
+      if (e.error === 'slot_taken') {
+        toast('Это время только что заняли, выбери другое', 'error');
+        goToStep(1);
+        state.selectedSlotId = null;
+        await loadSlots();
+      } else {
+        toast('Что-то пошло не так, попробуй ещё раз', 'error');
+      }
+      updateMainBtn();
+    }
+  } else if (state.step === 3) {
+    state.selectedDate = null;
+    state.selectedSlotId = null;
+    document.getElementById('inputService').value = '';
+    document.getElementById('inputPhone').value = '';
+    goToStep(1);
+    loadSlots();
+  }
+}
+
+// ---------- мои записи ----------
+async function loadMyBookings() {
+  const list = document.getElementById('myList');
+  list.innerHTML = '<div class="loader"><div class="spin"></div></div>';
+  try {
+    const data = await api('/api/my_bookings', {});
+    state.myBookings = data.bookings || [];
+    renderMyBookings();
+  } catch (e) {
+    list.innerHTML = '<div class="empty-state"><div class="emoji">🌷</div>Не удалось загрузить записи</div>';
+  }
+}
+
+function renderMyBookings() {
+  const list = document.getElementById('myList');
+  if (!state.myBookings.length) {
+    list.innerHTML = '<div class="empty-state"><div class="emoji">🌷</div>У тебя пока нет записей<br>Загляни во вкладку «Новая запись»</div>';
+    return;
+  }
+  list.innerHTML = '';
+  state.myBookings.forEach(b => {
+    const card = document.createElement('div');
+    card.className = 'booking-card';
+    card.innerHTML = `
+      <div class="date">${formatDateFull(b.slot_date)}, ${b.slot_time}</div>
+      <div class="meta">${b.service ? b.service : 'Без указания услуги'}</div>
+      <div class="booking-actions">
+        <button class="b-resched" onclick="startReschedule(${b.id})">🔄 Перенести</button>
+        <button class="b-cancel" onclick="cancelBooking(${b.id})">❌ Отменить</button>
+      </div>
+    `;
+    list.appendChild(card);
+  });
+}
+
+async function cancelBooking(id) {
+  if (!confirm('Точно отменить эту запись?')) return;
+  try {
+    await api('/api/cancel', { booking_id: id });
+    toast('Запись отменена', 'success');
+    loadMyBookings();
+  } catch (e) {
+    toast('Не удалось отменить', 'error');
+  }
+}
+
+// ---------- перенос ----------
+async function startReschedule(bookingId) {
+  state.reschedulingBookingId = bookingId;
+  document.getElementById('flowMy').style.display = 'none';
+  document.getElementById('flowReschedule').style.display = '';
+  document.getElementById('bottomBar').style.display = 'none';
+
+  const res = await fetch(API + '/api/slots');
+  const data = await res.json();
+  const slots = data.slots || [];
+  const dates = [...new Set(slots.map(s => s.slot_date))].sort();
+  const dayScroll = document.getElementById('reschedDayScroll');
+  dayScroll.innerHTML = '';
+
+  if (!dates.length) {
+    dayScroll.innerHTML = '<div class="empty-state" style="width:100%">Свободных слотов нет</div>';
+    return;
+  }
+
+  let selDate = dates[0];
+  function renderReschedDays() {
+    dayScroll.innerHTML = '';
+    dates.forEach(d => {
+      const lbl = formatDateLabel(d);
+      const card = document.createElement('div');
+      card.className = 'day-card has-slots' + (selDate === d ? ' selected' : '');
+      card.innerHTML = `<div class="wd">${lbl.wd}</div><div class="num">${lbl.num}</div><div class="mo">${lbl.mo}</div>`;
+      card.onclick = () => { selDate = d; renderReschedDays(); renderReschedTimes(); };
+      dayScroll.appendChild(card);
+    });
+  }
+  function renderReschedTimes() {
+    const grid = document.getElementById('reschedTimeGrid');
+    const label = document.getElementById('reschedTimeLabel');
+    grid.innerHTML = '';
+    const daySlots = slots.filter(s => s.slot_date === selDate);
+    if (!daySlots.length) { label.style.display = 'none'; return; }
+    label.style.display = '';
+    daySlots.forEach(s => {
+      const el = document.createElement('div');
+      el.className = 'time-slot';
+      el.textContent = s.slot_time;
+      el.onclick = async () => {
+        try {
+          await api('/api/reschedule', { booking_id: bookingId, new_slot_id: s.id });
+          toast('Перенесено!', 'success');
+          backToMy();
+        } catch (e) {
+          toast(e.error === 'slot_taken' ? 'Это время уже заняли' : 'Не удалось перенести', 'error');
+        }
+      };
+      grid.appendChild(el);
+    });
+  }
+  renderReschedDays();
+  renderReschedTimes();
+}
+
+function backToMy() {
+  document.getElementById('flowReschedule').style.display = 'none';
+  document.getElementById('flowMy').style.display = '';
+  loadMyBookings();
+}
+
+// ---------- init ----------
+loadSlots();
+</script>
+</body>
+</html>
