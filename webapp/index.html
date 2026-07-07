@@ -505,7 +505,7 @@ async function onMainBtn() {
       });
       const slot = state.slots.find(s => s.id === state.selectedSlotId);
       document.getElementById('successText').textContent =
-        `Жду тебя ${formatDateFull(slot.slot_date)} в ${slot.slot_time} 🌸`;
+        `Запись успешно добавлена: ${formatDateFull(slot.slot_date)} в ${slot.slot_time}`;
       goToStep(3);
       if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
     } catch (e) {
