@@ -417,7 +417,7 @@ function renderDays() {
   const dates = [...new Set(state.slots.map(s => s.slot_date))].sort();
 
   if (dates.length === 0) {
-    dayScroll.innerHTML = '<div class="empty-state" style="width:100%"><div class="emoji">🌷</div>Свободных дат пока нет<br>Загляни чуть позже</div>';
+    dayScroll.innerHTML = '<div class="empty-state" style="width:100%">Нет дат</div>';
     return;
   }
 
