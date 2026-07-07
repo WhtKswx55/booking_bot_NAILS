@@ -536,7 +536,16 @@ async function loadMyBookings() {
   try {
     const data = await api('/api/my_bookings', {});
     state.myBookings = data.bookings || [];
-    renderMyBookings();
+
+    // Если зашел админ, меняем текст вкладки и шапки
+    if (data.is_admin) {
+      document.getElementById('tabMy').textContent = 'Все записи 📊';
+      if (state.tab === 'my') {
+        document.getElementById('headerSub').textContent = 'Общий график записей';
+      }
+    }
+
+    renderMyBookings(data.is_admin); // передаем статус админа в функцию отрисовки
   } catch (e) {
     list.innerHTML = '<div class="empty-state"><div class="emoji">🌷</div>Не удалось загрузить записи</div>';
   }

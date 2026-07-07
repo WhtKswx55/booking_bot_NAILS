@@ -328,8 +328,19 @@ async def api_get_my_bookings(request: web.Request):
     if not user:
         return web.json_response({"error": "unauthorized"}, status=401)
 
-    bookings = await db.get_client_bookings(user["id"])
-    return web.json_response({"bookings": bookings})
+    user_is_admin = is_admin(user["id"])
+
+    if user_is_admin:
+        today = date.today().isoformat()
+        bookings = await db.get_all_active_bookings(from_date=today)
+    else:
+        bookings = await db.get_client_bookings(user["id"])
+
+    # Передаем список записей + флаг, админ это или нет
+    return web.json_response({
+        "bookings": bookings,
+        "is_admin": user_is_admin
+    })
 
 
 async def api_create_booking(request: web.Request):
