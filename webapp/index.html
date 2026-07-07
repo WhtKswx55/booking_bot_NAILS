@@ -539,7 +539,7 @@ async function loadMyBookings() {
 
     // Если зашел админ, меняем текст вкладки и шапки
     if (data.is_admin) {
-      document.getElementById('tabMy').textContent = 'Все записи 📊';
+      document.getElementById('tabMy').textContent = 'Все записи';
       if (state.tab === 'my') {
         document.getElementById('headerSub').textContent = 'Общий график записей';
       }
