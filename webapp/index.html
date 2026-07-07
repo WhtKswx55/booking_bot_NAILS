@@ -275,7 +275,7 @@
       </div>
       <div class="field">
         <label>Имя (никнейм) </label>
-        <input type="tel" id="inputPhone" placeholder="Имя">
+        <input type="text" id="inputName" placeholder="Имя">
       </div>
     </div>
 
@@ -501,7 +501,7 @@ async function onMainBtn() {
       await api('/api/book', {
         slot_id: state.selectedSlotId,
         service: document.getElementById('inputService').value,
-        phone: document.getElementById('inputPhone').value,
+        phone: document.getElementById('inputName').value,
       });
       const slot = state.slots.find(s => s.id === state.selectedSlotId);
       document.getElementById('successText').textContent =
@@ -523,7 +523,7 @@ async function onMainBtn() {
     state.selectedDate = null;
     state.selectedSlotId = null;
     document.getElementById('inputService').value = '';
-    document.getElementById('inputPhone').value = '';
+    document.getElementById('inputName').value = '';
     goToStep(1);
     loadSlots();
   }
