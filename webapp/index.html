@@ -552,9 +552,16 @@ function renderMyBookings() {
   state.myBookings.forEach(b => {
     const card = document.createElement('div');
     card.className = 'booking-card';
+
+    // Получаем имя клиента (если бэкенд возвращает его под ключом name, замени b.phone на b.name)
+    const clientName = b.phone ? b.phone : 'Имя не указано';
+
     card.innerHTML = `
       <div class="date">${formatDateFull(b.slot_date)}, ${b.slot_time}</div>
-      <div class="meta">${b.service ? b.service : 'Без указания услуги'}</div>
+      <div class="meta">
+        <strong>${clientName}</strong><br>
+        ${b.service ? b.service : 'Без указания услуги'}
+      </div>
       <div class="booking-actions">
         <button class="b-resched" onclick="startReschedule(${b.id})">🔄 Перенести</button>
         <button class="b-cancel" onclick="cancelBooking(${b.id})">❌ Отменить</button>
