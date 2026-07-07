@@ -359,10 +359,10 @@ async def api_create_booking(request: web.Request):
         try:
             await bot.send_message(
                 admin_id,
-                f"🆕 Новая запись!\n{name} (@{username or '—'})\n"
+                f"🆕 Новая запись!"
                 f"{format_date_ru(slot['slot_date'])} в {slot['slot_time']}"
                 + (f"\nУслуга: {service}" if service else "")
-                + (f"\nТелефон: {phone}" if phone else ""),
+                + (f"\nИмя: {phone}" if phone else ""),
             )
         except Exception:
             pass
