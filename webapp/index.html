@@ -551,23 +551,29 @@ async function loadMyBookings() {
   }
 }
 
-function renderMyBookings() {
+function renderMyBookings(isAdmin = false) {
   const list = document.getElementById('myList');
   if (!state.myBookings.length) {
-    list.innerHTML = '<div class="empty-state"><div class="emoji">🌷</div>У тебя пока нет записей<br>Загляни во вкладку «Новая запись»</div>';
+    const text = isAdmin
+      ? 'На ближайшее время активных записей нет'
+      : 'У тебя пока нет записей<br>Загляни во вкладку «Новая запись»';
+    list.innerHTML = `<div class="empty-state"><div class="emoji">🌷</div>${text}</div>`;
     return;
   }
   list.innerHTML = '';
   state.myBookings.forEach(b => {
     const card = document.createElement('div');
     card.className = 'booking-card';
-    const clientName = b.phone ? b.phone : 'Имя не указано';
+
+    // Если это админ, показываем имя из поля phone, если клиент — пишем просто инфо
+    const clientName = b.phone ? b.phone : 'Клиент';
+    const metaText = isAdmin ? `<b>${clientName}</b>` : `✨ ${b.service ? b.service : 'Без услуги'}`;
 
     card.innerHTML = `
       <div class="date">${formatDateFull(b.slot_date)}, ${b.slot_time}</div>
       <div class="meta">
-        <strong>${clientName}</strong><br>
-        ${b.service ? b.service : 'Без указания услуги'}
+        ${metaText}
+        ${isAdmin && b.service ? `<br>✨ Услуга: ${b.service}` : ''}
       </div>
       <div class="booking-actions">
         <button class="b-resched" onclick="startReschedule(${b.id})">🔄 Перенести</button>
