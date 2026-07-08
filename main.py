@@ -1,14 +1,3 @@
-"""
-main.py — точка входа.
-
-Запускает:
- 1. Telegram-бота (aiogram, long polling) — хендлеры для клиенток и админки
- 2. aiohttp веб-сервер — отдаёт WebApp (статику) и REST API для него
- 3. Фоновую задачу напоминаний (за день до визита)
- 4. Self-ping задачу, чтобы реже засыпать на Render free tier
-
-Всё в одном процессе/порту, чтобы Render видел открытый порт и не "ронял" сервис.
-"""
 import asyncio
 import json
 import logging
@@ -166,7 +155,7 @@ async def cb_reschedule_apply(callback: CallbackQuery):
 
     new_slot = await db.get_slot(new_slot_id)
     await callback.message.edit_text(
-        f"Перенесено на {format_date_ru(new_slot['slot_date'])} в {new_slot['slot_time']} 🌸"
+        f"Перенесено на {format_date_ru(new_slot['slot_date'])} в {new_slot['slot_time']}"
     )
     await callback.answer("Готово!")
 
@@ -257,7 +246,7 @@ async def cmd_today(message: Message):
     today = date.today().isoformat()
     bookings = [b for b in await db.get_all_active_bookings(from_date=today) if b["slot_date"] == today]
     if not bookings:
-        await message.answer("На сегодня записей нет 🌸")
+        await message.answer("На сегодня записей нет")
         return
     lines = ["📅 Записи на сегодня:\n"]
     for b in bookings:
@@ -278,7 +267,7 @@ async def cmd_week(message: Message):
     week_end = (date.today() + timedelta(days=7)).isoformat()
     bookings = [b for b in bookings if b["slot_date"] <= week_end]
     if not bookings:
-        await message.answer("На ближайшую неделю записей нет 🌸")
+        await message.answer("На ближайшую неделю записей нет")
         return
     lines = ["📅 Записи на неделю:\n"]
     cur_date = None
@@ -444,7 +433,7 @@ async def reminder_loop():
                 try:
                     await bot.send_message(
                         b["client_tg_id"],
-                        f"🌸 Напоминание: завтра, {format_date_ru(b['slot_date'])}, "
+                        f"Напоминание: завтра, {format_date_ru(b['slot_date'])}, "
                         f"в {b['slot_time']} у тебя запись"
                         + (f" ({b['service']})" if b.get("service") else "")
                         + ".\nЕсли планы изменились — напиши /my, чтобы перенести или отменить.",
@@ -455,6 +444,33 @@ async def reminder_loop():
         except Exception as e:
             log.exception(f"Ошибка в reminder_loop: {e}")
         await asyncio.sleep(3600)
+
+
+LOVE_MESSAGES = [
+    "напоминание: я тебя люблююю",
+    "просто хотел сказать, что ты лучшее, что могло со мной случится",
+    "я тебя люблю. это важно",
+    "ты сегодня красивая. и вообще всегда",
+    "напоминание номер один: я тебя люблю ващета",
+    "не забывай: ты всегда любима",
+    "я тебя люблю хыхы",
+    "ты самая самая прекарснаяя и я тебя люблюююююююююю",
+    "ты мой котеночек хыхы"
+]
+
+async def love_loop():
+    """2 раза в неделю в случайное время шлёт любовное уведомление обоим админам."""
+    import random
+    await asyncio.sleep(random.randint(3600, 7200))  # не сразу при старте
+    while True:
+        msg = random.choice(LOVE_MESSAGES)
+        for admin_id in config.ADMIN_IDS:
+            try:
+                await bot.send_message(admin_id, msg)
+            except Exception as e:
+                log.warning(f"love_loop: {e}")
+        # 2–5 дней до следующего (≈ 2 раза в неделю)
+        await asyncio.sleep(random.randint(2 * 86400, 5 * 86400))
 
 
 async def self_ping_loop():
@@ -500,6 +516,7 @@ async def main():
     log.info(f"Веб-сервер запущен на порту {config.PORT}")
 
     asyncio.create_task(reminder_loop())
+    asyncio.create_task(love_loop())
     asyncio.create_task(self_ping_loop())
 
     log.info("Бот запущен, начинаю polling...")

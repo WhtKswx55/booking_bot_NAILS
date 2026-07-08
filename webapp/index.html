@@ -3,235 +3,222 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Запись</title>
+<title>Запись 🌸</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --bg: #FBF1EE;
-    --card: #FFFFFF;
-    --ink: #3B2A2E;
-    --ink-soft: #8C7378;
-    --rose: #C8788A;
-    --rose-deep: #9C4E62;
-    --rose-pale: #F3DCE1;
-    --line: #EEDCE0;
-    --success: #7E9B76;
-    --danger: #B85C5C;
-    --shadow: 0 8px 24px rgba(156, 78, 98, 0.12);
-    --radius: 20px;
-  }
+:root{
+  --bg:#FBF1EE; --card:#fff; --ink:#3B2A2E; --soft:#8C7378;
+  --rose:#C8788A; --deep:#9C4E62; --pale:#F3DCE1; --line:#EEDCE0;
+  --ok:#7E9B76; --bad:#B85C5C; --shadow:0 8px 24px rgba(156,78,98,.12); --r:20px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+  font-family:'Manrope',sans-serif;min-height:100vh;overflow-x:hidden;padding-bottom:110px;}
 
-  *{ box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html,body{ margin:0; padding:0; }
-  body{
-    background: var(--bg);
-    color: var(--ink);
-    font-family: 'Manrope', sans-serif;
-    min-height: 100vh;
-    padding-bottom: 100px;
-    overflow-x: hidden;
-  }
+.petal-bg{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden;}
+.petal-bg span{position:absolute;opacity:.22;top:-10%;animation:fall linear infinite;}
+@keyframes fall{to{transform:translateY(120vh) rotate(360deg);}}
 
-  .petal-bg{
-    position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden;
-  }
-  .petal-bg span{
-    position: absolute; font-size: 22px; opacity: .25; top: -10%;
-    animation: fall linear infinite;
-  }
-  @keyframes fall{
-    to { transform: translateY(120vh) rotate(360deg); }
-  }
+header{padding:24px 20px 14px;text-align:center;}
+header h1{font-family:'Fraunces',serif;font-weight:500;font-size:27px;margin:0 0 3px;color:var(--deep);}
+header p{margin:0;color:var(--soft);font-size:13px;}
 
-  header{
-    padding: 28px 20px 18px;
-    text-align: center;
-  }
-  header h1{
-    font-family: 'Fraunces', serif;
-    font-weight: 500;
-    font-size: 28px;
-    margin: 0 0 4px;
-    color: var(--rose-deep);
-    letter-spacing: 0.2px;
-  }
-  header p{
-    margin: 0;
-    color: var(--ink-soft);
-    font-size: 14px;
-  }
+.nav-tabs{display:flex;gap:8px;padding:0 16px 12px;max-width:480px;margin:0 auto;}
+.nav-tabs button{
+  flex:1;padding:10px;border-radius:13px;border:none;background:transparent;
+  font-family:inherit;font-weight:700;font-size:14px;color:var(--soft);cursor:pointer;transition:all .2s;
+}
+.nav-tabs button.active{background:var(--card);color:var(--deep);box-shadow:var(--shadow);}
 
-  .steps{
-    display: flex; justify-content: center; gap: 6px; margin: 14px 0 4px;
-  }
-  .steps .dot{
-    width: 7px; height: 7px; border-radius: 50%; background: var(--line);
-    transition: all .3s;
-  }
-  .steps .dot.active{ background: var(--rose); width: 18px; border-radius: 4px; }
-  .steps .dot.done{ background: var(--rose-pale); }
+main{padding:0 16px;max-width:480px;margin:0 auto;}
 
-  main{
-    padding: 12px 16px;
-    max-width: 480px;
-    margin: 0 auto;
-  }
+/* ── ВКЛАДКА: НОВАЯ ЗАПИСЬ (оригинальная логика) ── */
+.section-label{font-size:12px;color:var(--soft);text-transform:uppercase;
+  letter-spacing:.08em;margin:18px 2px 10px;font-weight:700;}
 
-  .screen{ display: none; animation: fadeIn .35s ease; }
-  .screen.active{ display: block; }
-  @keyframes fadeIn{ from{ opacity:0; transform: translateY(8px);} to{ opacity:1; transform: translateY(0);} }
+.day-scroll{display:flex;gap:10px;overflow-x:auto;padding:4px 2px 10px;scroll-snap-type:x mandatory;}
+.day-scroll::-webkit-scrollbar{display:none;}
+.day-card{
+  flex:0 0 64px;scroll-snap-align:start;background:var(--card);border:1.5px solid var(--line);
+  border-radius:16px;padding:12px 0 10px;text-align:center;cursor:pointer;transition:all .2s;position:relative;
+}
+.day-card .wd{font-size:11px;color:var(--soft);text-transform:uppercase;}
+.day-card .num{font-family:'Fraunces',serif;font-size:22px;margin:2px 0;}
+.day-card .mo{font-size:10px;color:var(--soft);}
+.day-card.selected{background:var(--deep);border-color:var(--deep);box-shadow:var(--shadow);transform:translateY(-2px);}
+.day-card.selected .wd,.day-card.selected .mo{color:var(--pale);}
+.day-card.selected .num{color:#fff;}
+.day-card.has-slots::after{content:'';position:absolute;bottom:6px;left:50%;transform:translateX(-50%);
+  width:4px;height:4px;border-radius:50%;background:var(--rose);}
+.day-card.selected.has-slots::after{background:#fff;}
 
-  .section-label{
-    font-size: 13px; color: var(--ink-soft); text-transform: uppercase;
-    letter-spacing: 0.08em; margin: 18px 4px 10px; font-weight: 600;
-  }
+.time-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.time-slot{
+  background:var(--card);border:1.5px solid var(--line);border-radius:14px;
+  padding:12px 0;text-align:center;font-weight:600;font-size:15px;cursor:pointer;transition:all .15s;
+}
+.time-slot:active{transform:scale(.96);}
+.time-slot.selected{background:var(--rose);border-color:var(--rose);color:#fff;box-shadow:var(--shadow);}
 
-  /* ---- Календарь дней ---- */
-  .day-scroll{
-    display: flex; gap: 10px; overflow-x: auto; padding: 4px 2px 10px;
-    scroll-snap-type: x mandatory;
-  }
-  .day-scroll::-webkit-scrollbar{ display:none; }
-  .day-card{
-    flex: 0 0 64px; scroll-snap-align: start;
-    background: var(--card); border: 1.5px solid var(--line); border-radius: 16px;
-    padding: 12px 0 10px; text-align: center; cursor: pointer;
-    transition: all .2s; position: relative;
-  }
-  .day-card .wd{ font-size: 11px; color: var(--ink-soft); text-transform: uppercase; }
-  .day-card .num{ font-family: 'Fraunces', serif; font-size: 22px; margin: 2px 0; }
-  .day-card .mo{ font-size: 10px; color: var(--ink-soft); }
-  .day-card.selected{
-    background: var(--rose-deep); border-color: var(--rose-deep);
-    box-shadow: var(--shadow); transform: translateY(-2px);
-  }
-  .day-card.selected .wd, .day-card.selected .mo{ color: var(--rose-pale); }
-  .day-card.selected .num{ color: #fff; }
-  .day-card.has-slots::after{
-    content: ''; position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%);
-    width: 4px; height: 4px; border-radius: 50%; background: var(--rose);
-  }
-  .day-card.selected.has-slots::after{ background: #fff; }
+.screen{display:none;animation:fadeIn .3s ease;}
+.screen.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
 
-  /* ---- Слоты времени ---- */
-  .time-grid{
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
-  }
-  .time-slot{
-    background: var(--card); border: 1.5px solid var(--line); border-radius: 14px;
-    padding: 12px 0; text-align: center; font-weight: 600; font-size: 15px;
-    cursor: pointer; transition: all .15s;
-  }
-  .time-slot:active{ transform: scale(0.96); }
-  .time-slot.selected{
-    background: var(--rose); border-color: var(--rose); color: #fff;
-    box-shadow: var(--shadow);
-  }
-  .empty-state{
-    text-align: center; padding: 40px 20px; color: var(--ink-soft);
-  }
-  .empty-state .emoji{ font-size: 36px; margin-bottom: 8px; }
+.steps{display:flex;justify-content:center;gap:6px;margin:14px 0 4px;}
+.steps .dot{width:7px;height:7px;border-radius:50%;background:var(--line);transition:all .3s;}
+.steps .dot.active{background:var(--rose);width:18px;border-radius:4px;}
+.steps .dot.done{background:var(--pale);}
 
-  /* ---- Форма ---- */
-  .field{ margin-bottom: 14px; }
-  .field label{
-    display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--ink-soft);
-  }
-  .field input, .field textarea{
-    width: 100%; padding: 13px 14px; border-radius: 14px; border: 1.5px solid var(--line);
-    background: var(--card); font-family: inherit; font-size: 15px; color: var(--ink);
-    outline: none; transition: border-color .15s;
-  }
-  .field input:focus, .field textarea:focus{ border-color: var(--rose); }
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:var(--soft);}
+.field input{
+  width:100%;padding:13px 14px;border-radius:14px;border:1.5px solid var(--line);
+  background:var(--card);font-family:inherit;font-size:15px;color:var(--ink);outline:none;transition:border-color .15s;
+}
+.field input:focus{border-color:var(--rose);}
 
-  .summary-card{
-    background: var(--card); border-radius: var(--radius); padding: 18px;
-    box-shadow: var(--shadow); margin-bottom: 18px;
-  }
-  .summary-row{
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 8px 0; font-size: 15px;
-  }
-  .summary-row + .summary-row{ border-top: 1px solid var(--line); }
-  .summary-row .k{ color: var(--ink-soft); font-size: 13px; }
-  .summary-row .v{ font-weight: 600; }
+.summary-card{background:var(--card);border-radius:var(--r);padding:18px;box-shadow:var(--shadow);margin-bottom:18px;}
+.summary-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;font-size:15px;}
+.summary-row+.summary-row{border-top:1px solid var(--line);}
+.summary-row .k{color:var(--soft);font-size:13px;}
+.summary-row .v{font-weight:600;}
 
-  /* ---- Кнопки ---- */
-  .btn{
-    display: block; width: 100%; padding: 16px; border-radius: 16px; border: none;
-    font-family: inherit; font-weight: 700; font-size: 16px; cursor: pointer;
-    transition: all .15s; text-align: center;
-  }
-  .btn:active{ transform: scale(0.98); }
-  .btn-primary{ background: var(--rose-deep); color: #fff; box-shadow: var(--shadow); }
-  .btn-primary:disabled{ background: var(--line); color: var(--ink-soft); box-shadow: none; cursor: not-allowed; }
-  .btn-ghost{ background: transparent; color: var(--ink-soft); margin-top: 10px; }
-  .btn-danger-outline{ background: #fff; color: var(--danger); border: 1.5px solid var(--danger); }
+.success-screen{text-align:center;padding:30px 10px;}
+.success-screen .big-emoji{font-size:64px;animation:pop .5s ease;}
+@keyframes pop{0%{transform:scale(0);}60%{transform:scale(1.15);}100%{transform:scale(1);}}
+.success-screen h2{font-family:'Fraunces',serif;font-size:24px;color:var(--deep);margin:12px 0 6px;}
+.success-screen p{color:var(--soft);margin:0 0 24px;}
 
-  .bottom-bar{
-    position: fixed; bottom: 0; left: 0; right: 0; padding: 14px 16px;
-    background: linear-gradient(to top, var(--bg) 60%, transparent);
-  }
-  .bottom-bar-inner{ max-width: 480px; margin: 0 auto; }
+.empty-state{text-align:center;padding:40px 20px;color:var(--soft);}
+.empty-state .emoji{font-size:36px;margin-bottom:8px;}
 
-  /* ---- Мои записи ---- */
-  .booking-card{
-    background: var(--card); border-radius: var(--radius); padding: 16px;
-    box-shadow: var(--shadow); margin-bottom: 12px;
-  }
-  .booking-card .date{
-    font-family: 'Fraunces', serif; font-size: 19px; color: var(--rose-deep); margin-bottom: 2px;
-  }
-  .booking-card .meta{ color: var(--ink-soft); font-size: 13px; margin-bottom: 12px; }
-  .booking-actions{ display: flex; gap: 8px; }
-  .booking-actions button{
-    flex: 1; padding: 10px; border-radius: 12px; border: 1.5px solid var(--line);
-    background: #fff; font-weight: 600; font-size: 13px; cursor: pointer;
-  }
-  .booking-actions .b-cancel{ color: var(--danger); border-color: #f0d6d6; }
-  .booking-actions .b-resched{ color: var(--rose-deep); border-color: var(--rose-pale); }
+.btn{
+  display:block;width:100%;padding:16px;border-radius:16px;border:none;
+  font-family:inherit;font-weight:700;font-size:16px;cursor:pointer;transition:all .15s;text-align:center;
+}
+.btn:active{transform:scale(.98);}
+.btn-primary{background:var(--deep);color:#fff;box-shadow:var(--shadow);}
+.btn-primary:disabled{background:var(--line);color:var(--soft);box-shadow:none;cursor:not-allowed;}
 
-  .toast{
-    position: fixed; top: 16px; left: 50%; transform: translateX(-50%) translateY(-120%);
-    background: var(--ink); color: #fff; padding: 12px 20px; border-radius: 14px;
-    font-size: 14px; font-weight: 600; z-index: 100; transition: transform .3s ease;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-  }
-  .toast.show{ transform: translateX(-50%) translateY(0); }
-  .toast.success{ background: var(--success); }
-  .toast.error{ background: var(--danger); }
+.bottom-bar{position:fixed;bottom:0;left:0;right:0;padding:14px 16px;
+  background:linear-gradient(to top,var(--bg) 60%,transparent);}
+.bottom-bar-inner{max-width:480px;margin:0 auto;}
 
-  .nav-tabs{
-    display: flex; gap: 8px; margin-bottom: 6px;
-  }
-  .nav-tabs button{
-    flex: 1; padding: 10px; border-radius: 12px; border: none; background: transparent;
-    font-weight: 700; font-size: 14px; color: var(--ink-soft); cursor: pointer;
-  }
-  .nav-tabs button.active{ background: var(--card); color: var(--rose-deep); box-shadow: var(--shadow); }
+/* ── КАЛЕНДАРЬ ── */
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.cal-nav .month-label{font-family:'Fraunces',serif;font-size:20px;color:var(--deep);font-weight:500;}
+.cal-nav button{
+  background:var(--pale);border:none;border-radius:10px;padding:6px 14px;
+  font-size:19px;color:var(--deep);cursor:pointer;transition:background .15s;
+}
+.cal-nav button:hover{background:var(--line);}
 
-  .loader{
-    display: flex; justify-content: center; padding: 40px;
-  }
-  .loader .spin{
-    width: 28px; height: 28px; border-radius: 50%;
-    border: 3px solid var(--rose-pale); border-top-color: var(--rose-deep);
-    animation: spin 0.8s linear infinite;
-  }
-  @keyframes spin{ to{ transform: rotate(360deg); } }
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px;}
+.cal-wd{text-align:center;font-size:11px;font-weight:700;color:var(--soft);
+  padding:5px 0;text-transform:uppercase;}
+.cal-day{
+  aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  border-radius:11px;cursor:pointer;font-size:14px;font-weight:600;
+  position:relative;border:1.5px solid transparent;transition:all .15s;user-select:none;
+}
+.cal-day.empty{pointer-events:none;}
+.cal-day.other{opacity:.28;pointer-events:none;}
+.cal-day:hover:not(.today-cell):not(.selected-cell){background:var(--pale);}
+.cal-day.today-cell{border-color:var(--rose);color:var(--deep);}
+.cal-day.selected-cell{background:var(--deep);color:#fff;box-shadow:var(--shadow);}
+.cal-day.has-dot::after{
+  content:'';position:absolute;bottom:3px;left:50%;transform:translateX(-50%);
+  width:5px;height:5px;border-radius:50%;background:var(--rose);
+}
+.cal-day.selected-cell.has-dot::after{background:rgba(255,255,255,.8);}
+.cal-day.past{opacity:.45;}
 
-  .success-screen{
-    text-align: center; padding: 30px 10px;
-  }
-  .success-screen .big-emoji{
-    font-size: 64px; animation: pop .5s ease;
-  }
-  @keyframes pop{ 0%{ transform: scale(0); } 60%{ transform: scale(1.15); } 100%{ transform: scale(1); } }
-  .success-screen h2{ font-family: 'Fraunces', serif; font-size: 24px; color: var(--rose-deep); margin: 12px 0 6px; }
-  .success-screen p{ color: var(--ink-soft); margin: 0 0 24px; }
+.day-panel{margin-top:16px;}
+.day-panel-title{font-family:'Fraunces',serif;font-size:18px;color:var(--deep);margin-bottom:12px;}
+
+.bcard{
+  background:var(--card);border-radius:16px;padding:14px 16px;
+  box-shadow:var(--shadow);margin-bottom:10px;
+}
+.bcard-time{font-weight:700;font-size:15px;color:var(--deep);margin-bottom:2px;}
+.bcard-name{font-size:16px;font-weight:600;margin-bottom:2px;}
+.bcard-meta{font-size:13px;color:var(--soft);}
+.bcard-actions{display:flex;gap:8px;margin-top:10px;}
+.bcard-actions button{
+  flex:1;padding:9px;border-radius:11px;border:1.5px solid var(--line);
+  background:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;
+}
+.bcard-actions .b-rs{color:var(--deep);border-color:var(--pale);}
+.bcard-actions .b-cx{color:var(--bad);border-color:#f0d6d6;}
+
+.add-day-btn{
+  width:100%;margin-top:6px;padding:13px;background:transparent;border:1.5px dashed var(--rose);
+  border-radius:14px;font-family:inherit;font-size:14px;font-weight:700;color:var(--rose);cursor:pointer;
+}
+.add-day-btn:hover{background:var(--pale);}
+
+/* ── ПЕРЕНОС-МОДАЛКА ── */
+.modal-bg{
+  position:fixed;inset:0;background:rgba(59,42,46,.45);z-index:50;
+  display:flex;align-items:flex-end;animation:mfade .2s;
+}
+@keyframes mfade{from{opacity:0;}to{opacity:1;}}
+.modal-box{
+  width:100%;background:var(--bg);border-radius:22px 22px 0 0;
+  padding:20px 16px 44px;max-height:82vh;overflow-y:auto;
+}
+.modal-box h3{font-family:'Fraunces',serif;font-size:18px;color:var(--deep);margin-bottom:14px;}
+.modal-close{float:right;background:var(--pale);border:none;border-radius:9px;
+  padding:4px 12px;font-size:18px;cursor:pointer;color:var(--deep);}
+
+.time-presets{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px;}
+.tp{padding:6px 11px;border-radius:9px;border:1.5px solid var(--line);
+  background:#fff;font-size:13px;font-weight:600;cursor:pointer;color:var(--ink);}
+.tp.sel{background:var(--rose);border-color:var(--rose);color:#fff;}
+
+/* ── ТОСТ ── */
+.toast{
+  position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(-130%);
+  background:var(--ink);color:#fff;padding:12px 20px;border-radius:14px;
+  font-size:14px;font-weight:600;z-index:200;transition:transform .3s;
+  box-shadow:0 8px 20px rgba(0,0,0,.2);white-space:nowrap;
+}
+.toast.show{transform:translateX(-50%) translateY(0);}
+.toast.success{background:var(--ok);}
+.toast.error{background:var(--bad);}
+
+/* ── ПАСХАЛКА ── */
+.easter-btn{
+  position:fixed;bottom:90px;right:16px;z-index:30;
+  background:none;border:none;font-size:26px;cursor:pointer;
+  animation:wb 3s ease-in-out infinite;filter:drop-shadow(0 2px 6px rgba(156,78,98,.3));
+}
+@keyframes wb{0%,100%{transform:rotate(-8deg) scale(1);}50%{transform:rotate(8deg) scale(1.1);}}
+
+.easter-overlay{
+  position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;
+  background:rgba(59,42,46,.55);animation:mfade .25s;
+}
+.easter-box{
+  background:linear-gradient(135deg,#fce4ec,#f8bbd0,#fce4ec);
+  border-radius:26px;padding:34px 28px 28px;text-align:center;max-width:300px;width:88%;
+  box-shadow:0 20px 60px rgba(156,78,98,.35);animation:epop .45s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes epop{from{transform:scale(0);opacity:0;}to{transform:scale(1);opacity:1;}}
+.easter-box .e-big{font-size:58px;display:block;margin-bottom:10px;}
+.easter-box h2{font-family:'Fraunces',serif;font-size:22px;color:var(--deep);margin:0 0 8px;}
+.easter-box p{color:var(--soft);font-size:15px;line-height:1.55;margin:0;}
+.easter-box button{
+  margin-top:20px;padding:12px 28px;background:var(--deep);color:#fff;
+  border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;
+}
+
+.loader{display:flex;justify-content:center;padding:40px;}
+.spin{width:28px;height:28px;border-radius:50%;border:3px solid var(--pale);border-top-color:var(--deep);animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
 </style>
 </head>
 <body>
@@ -239,47 +226,50 @@
 <div class="petal-bg" id="petalBg"></div>
 
 <header>
-  <h1>🌸 Запись</h1>
-  <p id="headerSub">Выбери удобное время</p>
+  <h1>🌸 Записи</h1>
+  <p id="headerSub">Личный планировщик</p>
 </header>
 
+<div class="nav-tabs">
+  <button class="active" id="tabCal" onclick="showTab('cal')">📅 Календарь</button>
+  <button id="tabNew" onclick="showTab('new')">➕ Новая запись</button>
+</div>
+
 <main>
-  <div class="nav-tabs">
-    <button class="active" id="tabNew" onclick="showTab('new')">Новая запись</button>
-    <button id="tabMy" onclick="showTab('my')">Мои записи</button>
+
+  <!-- ══ ВКЛАДКА: КАЛЕНДАРЬ ══ -->
+  <div id="viewCal">
+    <div class="cal-nav">
+      <button onclick="prevMonth()">‹</button>
+      <span class="month-label" id="calMonthLabel"></span>
+      <button onclick="nextMonth()">›</button>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+    <div id="dayPanel" class="day-panel"></div>
   </div>
 
-  <!-- ЭКРАН: НОВАЯ ЗАПИСЬ -->
-  <div id="flowNew">
+  <!-- ══ ВКЛАДКА: НОВАЯ ЗАПИСЬ ══ -->
+  <div id="viewNew" style="display:none;">
     <div class="steps">
       <div class="dot active" id="dot1"></div>
       <div class="dot" id="dot2"></div>
       <div class="dot" id="dot3"></div>
     </div>
 
-    <!-- Шаг 1: выбор дня -->
     <div class="screen active" id="screenDay">
       <div class="section-label">Выбери день</div>
       <div class="day-scroll" id="dayScroll"></div>
-      <div class="section-label" id="timeLabel" style="display:none">Выбери время</div>
+      <div class="section-label" id="timeLabel" style="display:none;">Выбери время</div>
       <div class="time-grid" id="timeGrid"></div>
-      <div id="loaderSlots" class="loader"><div class="spin"></div></div>
+      <div id="loaderSlots" class="loader" style="display:none;"><div class="spin"></div></div>
     </div>
 
-    <!-- Шаг 2: данные -->
     <div class="screen" id="screenForm">
       <div class="summary-card" id="formSummary"></div>
-      <div class="field">
-        <label>Услуга (необязательно)</label>
-        <input type="text" id="inputService" placeholder="Маникюр">
-      </div>
-      <div class="field">
-        <label>Имя (никнейм) </label>
-        <input type="text" id="inputName" placeholder="Имя">
-      </div>
+      <div class="field"><label>Имя клиента</label><input type="text" id="inputName" placeholder="Алина"></div>
+      <div class="field"><label>Услуга (необязательно)</label><input type="text" id="inputService" placeholder="Маникюр, стрижка…"></div>
     </div>
 
-    <!-- Шаг 3: успех -->
     <div class="screen" id="screenSuccess">
       <div class="success-screen">
         <div class="big-emoji">🌸</div>
@@ -289,25 +279,16 @@
     </div>
   </div>
 
-  <!-- ЭКРАН: МОИ ЗАПИСИ -->
-  <div id="flowMy" style="display:none">
-    <div id="myList"></div>
-  </div>
-
-  <!-- ЭКРАН: ПЕРЕНОС -->
-  <div id="flowReschedule" style="display:none">
-    <div class="section-label">Перенос записи · выбери новый день</div>
-    <div class="day-scroll" id="reschedDayScroll"></div>
-    <div class="section-label" id="reschedTimeLabel" style="display:none">Выбери время</div>
-    <div class="time-grid" id="reschedTimeGrid"></div>
-  </div>
 </main>
 
-<div class="bottom-bar" id="bottomBar">
+<div class="bottom-bar" id="bottomBar" style="display:none;">
   <div class="bottom-bar-inner">
     <button class="btn btn-primary" id="mainBtn" onclick="onMainBtn()" disabled>Выбери время</button>
   </div>
 </div>
+
+<!-- пасхалка -->
+<button class="easter-btn" id="easterBtn" onclick="showEaster()" title="">🌸</button>
 
 <div class="toast" id="toast"></div>
 
@@ -315,352 +296,376 @@
 const tg = window.Telegram?.WebApp;
 if (tg) { tg.ready(); tg.expand(); }
 
-const API = ''; // тот же домен
+// ── petals ────────────────────────────────────────────────────────────────────
+;(function(){
+  const c = document.getElementById('petalBg');
+  ['🌸','🌷','💗','✿'].forEach(e => {
+    for(let i=0;i<3;i++){
+      const s=document.createElement('span'); s.textContent=e;
+      s.style.cssText=`left:${Math.random()*100}%;font-size:${14+Math.random()*14}px;`
+        +`animation-duration:${12+Math.random()*10}s;animation-delay:${Math.random()*8}s`;
+      c.appendChild(s);
+    }
+  });
+})();
 
-let state = {
-  tab: 'new',
-  step: 1,
-  slots: [],
-  selectedDate: null,
-  selectedSlotId: null,
-  myBookings: [],
-  reschedulingBookingId: null,
-};
-
-// ---------- petals decoration ----------
-function spawnPetals(){
-  const container = document.getElementById('petalBg');
-  const emojis = ['🌸','🌷','💗'];
-  for (let i=0;i<10;i++){
-    const s = document.createElement('span');
-    s.textContent = emojis[i % emojis.length];
-    s.style.left = (Math.random()*100) + '%';
-    s.style.animationDuration = (12 + Math.random()*10) + 's';
-    s.style.animationDelay = (Math.random()*10) + 's';
-    s.style.fontSize = (14 + Math.random()*14) + 'px';
-    container.appendChild(s);
-  }
-}
-spawnPetals();
-
-// ---------- toast ----------
+// ── toast ─────────────────────────────────────────────────────────────────────
 function toast(msg, type='') {
   const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.className = 'toast show ' + type;
+  el.textContent = msg; el.className = 'toast show '+type;
   setTimeout(() => el.classList.remove('show'), 2400);
 }
 
-// ---------- api helper ----------
+// ── api ───────────────────────────────────────────────────────────────────────
+const initData = tg ? tg.initData : '';
 async function api(path, body) {
-  const initData = tg ? tg.initData : '';
-  const res = await fetch(API + path, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ...body, initData }),
+  const r = await fetch(path, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({...body, initData})
   });
-  const data = await res.json();
-  if (!res.ok) throw data;
-  return data;
+  const d = await r.json();
+  if (!r.ok) throw d;
+  return d;
 }
 
-const RU_WEEKDAYS = ['вс','пн','вт','ср','чт','пт','сб'];
-const RU_MONTHS = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
-const RU_MONTHS_FULL = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+// ── date utils ────────────────────────────────────────────────────────────────
+const RU_WD    = ['пн','вт','ср','чт','пт','сб','вс'];
+const RU_MON   = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+const RU_MFULL = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+const RU_MNOM  = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
 
-function formatDateLabel(iso) {
-  const d = new Date(iso + 'T00:00:00');
-  return { wd: RU_WEEKDAYS[d.getDay()], num: d.getDate(), mo: RU_MONTHS[d.getMonth()] };
-}
-function formatDateFull(iso) {
-  const d = new Date(iso + 'T00:00:00');
-  return `${d.getDate()} ${RU_MONTHS_FULL[d.getMonth()]}`;
-}
+function isoToDate(iso){ return new Date(iso+'T00:00:00'); }
+function dateToIso(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function todayIso(){ return dateToIso(new Date()); }
+function fmtFull(iso){ const d=isoToDate(iso); return `${d.getDate()} ${RU_MFULL[d.getMonth()]} (${RU_WD[(d.getDay()+6)%7]})`; }
+function fmtLabel(iso){ const d=isoToDate(iso); return {wd:RU_WD[(d.getDay()+6)%7],num:d.getDate(),mo:RU_MON[d.getMonth()]}; }
 
-// ---------- tabs ----------
-function showTab(tab) {
-  state.tab = tab;
-  document.getElementById('tabNew').classList.toggle('active', tab === 'new');
-  document.getElementById('tabMy').classList.toggle('active', tab === 'my');
-  document.getElementById('flowNew').style.display = tab === 'new' ? '' : 'none';
-  document.getElementById('flowMy').style.display = tab === 'my' ? '' : 'none';
-  document.getElementById('flowReschedule').style.display = 'none';
-
-  if (tab === 'new') {
-    goToStep(1);
-    document.getElementById('headerSub').textContent = 'Выбери удобное время';
-    updateMainBtn();
-  } else {
-    document.getElementById('headerSub').textContent = 'Перенос или отмена';
-    loadMyBookings();
-  }
+// ── tabs ──────────────────────────────────────────────────────────────────────
+let currentTab = 'cal';
+function showTab(t) {
+  currentTab = t;
+  document.getElementById('viewCal').style.display = t==='cal' ? '' : 'none';
+  document.getElementById('viewNew').style.display = t==='new' ? '' : 'none';
+  document.getElementById('tabCal').classList.toggle('active', t==='cal');
+  document.getElementById('tabNew').classList.toggle('active', t==='new');
+  document.getElementById('bottomBar').style.display = t==='new' ? '' : 'none';
+  if (t==='cal') renderCalendar();
+  if (t==='new') { loadSlots(); goToStep(1); }
 }
 
-// ---------- load slots ----------
-async function loadSlots() {
-  document.getElementById('loaderSlots').style.display = 'flex';
+// ══════════════════════════════════════════════════════════════
+//  КАЛЕНДАРЬ
+// ══════════════════════════════════════════════════════════════
+let calYear  = new Date().getFullYear();
+let calMonth = new Date().getMonth()+1;
+let selectedDay = null;
+let allBookings = [];   // все активные записи, загруженные с сервера
+
+async function loadBookings() {
   try {
-    const res = await fetch(API + '/api/slots');
-    const data = await res.json();
-    state.slots = data.slots || [];
-    renderDays();
-  } catch (e) {
-    toast('Не удалось загрузить слоты', 'error');
-  } finally {
-    document.getElementById('loaderSlots').style.display = 'none';
+    const data = await api('/api/my_bookings', {});
+    allBookings = data.bookings || [];
+    isAdmin = data.is_admin || false;
+  } catch(e) {
+    allBookings = [];
   }
 }
 
-function renderDays() {
-  const dayScroll = document.getElementById('dayScroll');
-  dayScroll.innerHTML = '';
-  const dates = [...new Set(state.slots.map(s => s.slot_date))].sort();
+function prevMonth(){ calMonth--; if(calMonth<1){calMonth=12;calYear--;} renderCalendar(); }
+function nextMonth(){ calMonth++; if(calMonth>12){calMonth=1;calYear++;} renderCalendar(); }
 
-  if (dates.length === 0) {
-    dayScroll.innerHTML = '<div class="empty-state" style="width:100%">Нет дат</div>';
+async function renderCalendar() {
+  document.getElementById('calMonthLabel').textContent = `${RU_MNOM[calMonth-1]} ${calYear}`;
+  await loadBookings();
+
+  const bookedDates = new Set(allBookings.map(b => b.slot_date));
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML = '';
+
+  // Заголовок дней недели
+  RU_WD.forEach(w => {
+    const el=document.createElement('div'); el.className='cal-wd'; el.textContent=w; grid.appendChild(el);
+  });
+
+  const firstDay = new Date(calYear, calMonth-1, 1);
+  const startDow = (firstDay.getDay()+6)%7; // пн=0
+  const daysInMonth = new Date(calYear, calMonth, 0).getDate();
+  const today = todayIso();
+
+  for(let i=0;i<startDow;i++){
+    const el=document.createElement('div'); el.className='cal-day empty'; grid.appendChild(el);
+  }
+
+  for(let d=1;d<=daysInMonth;d++){
+    const iso=`${calYear}-${String(calMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const el=document.createElement('div');
+    el.className='cal-day';
+    if(iso<today) el.classList.add('past');
+    if(iso===today) el.classList.add('today-cell');
+    if(iso===selectedDay) el.classList.add('selected-cell');
+    if(bookedDates.has(iso)) el.classList.add('has-dot');
+    el.textContent=d;
+    el.onclick=()=>selectDay(iso);
+    grid.appendChild(el);
+  }
+
+  if(selectedDay){
+    const [sy,sm]=selectedDay.split('-').map(Number);
+    if(sy===calYear && sm===calMonth) renderDayPanel();
+    else { selectedDay=null; document.getElementById('dayPanel').innerHTML=''; }
+  }
+}
+
+function selectDay(iso){
+  selectedDay = iso; renderCalendar();
+}
+
+function renderDayPanel(){
+  const panel = document.getElementById('dayPanel');
+  const dayBookings = allBookings.filter(b=>b.slot_date===selectedDay)
+    .sort((a,b)=>a.slot_time.localeCompare(b.slot_time));
+
+  let html = `<div class="day-panel-title">📅 ${fmtFull(selectedDay)}</div>`;
+
+  if(!dayBookings.length){
+    html+=`<div class="empty-state" style="padding:20px 0;"><div class="emoji">🌷</div>На этот день записей нет</div>`;
+  } else {
+    dayBookings.forEach(b=>{
+      const name = b.phone || b.client_name || 'Клиент';
+      const meta = [b.service, b.client_username ? '@'+b.client_username : null].filter(Boolean).join(' · ');
+      html+=`<div class="bcard" id="bc-${b.id}">
+        <div class="bcard-time">${b.slot_time}</div>
+        <div class="bcard-name">${esc(name)}</div>
+        ${meta ? `<div class="bcard-meta">${esc(meta)}</div>` : ''}
+        <div class="bcard-actions">
+          <button class="b-rs" onclick="openResched(${b.id},'${b.slot_date}','${b.slot_time}')">🔄 Перенести</button>
+          <button class="b-cx" onclick="cancelBooking(${b.id})">❌ Отменить</button>
+        </div>
+      </div>`;
+    });
+  }
+
+  // кнопка добавить запись на этот день — только для админов
+  if(isAdmin){
+    html+=`<button class="add-day-btn" onclick="prefillNewBooking('${selectedDay}')">+ Добавить запись на этот день</button>`;
+  }
+  panel.innerHTML=html;
+}
+
+function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+async function cancelBooking(id){
+  if(!confirm('Отменить эту запись?')) return;
+  try {
+    await api('/api/cancel', {booking_id:id});
+    toast('Запись отменена','success');
+    allBookings = allBookings.filter(b=>b.id!==id);
+    renderCalendar();
+  } catch(e){ toast('Не удалось отменить','error'); }
+}
+
+// ── Перенос через модалку ────────────────────────────────────────────────────
+let reschedId = null;
+
+function openResched(id, curDate, curTime){
+  reschedId = id;
+  const m = document.createElement('div');
+  m.className='modal-bg'; m.id='reschedModal';
+  const times=['09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00'];
+  const presetHtml = times.map(t=>`<button class="tp${t===curTime?' sel':''}" onclick="pickTime(this,'${t}')">${t}</button>`).join('');
+  m.innerHTML=`<div class="modal-box">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <h3>Перенести запись</h3>
+    <div class="field"><label>Новая дата</label><input type="date" id="rDate" value="${curDate}"></div>
+    <div class="field">
+      <label>Новое время</label>
+      <input type="time" id="rTime" value="${curTime}" step="300">
+      <div class="time-presets">${presetHtml}</div>
+    </div>
+    <button class="btn btn-primary" style="margin-top:14px" onclick="submitResched()">Перенести 🔄</button>
+  </div>`;
+  document.body.appendChild(m);
+}
+
+function pickTime(btn, t){
+  document.getElementById('rTime').value=t;
+  document.querySelectorAll('#reschedModal .tp').forEach(x=>x.classList.remove('sel'));
+  btn.classList.add('sel');
+}
+function closeModal(){ document.getElementById('reschedModal')?.remove(); }
+
+async function submitResched(){
+  const nd = document.getElementById('rDate').value;
+  const nt = document.getElementById('rTime').value;
+  if(!nd||!nt){ toast('Укажи дату и время','error'); return; }
+  try {
+    await api('/api/reschedule',{booking_id:reschedId, new_slot_id:nt}); // примечание ниже
+    toast('Перенесено! 🔄','success');
+    closeModal();
+    selectedDay=nd;
+    const[y,m]=nd.split('-').map(Number); calYear=y; calMonth=m;
+    await renderCalendar();
+  } catch(e){ toast('Не удалось перенести','error'); }
+}
+
+// ── Быстрый переход к добавлению на конкретный день ──────────────────────────
+function prefillNewBooking(iso){
+  showTab('new');
+  // после загрузки слотов выберем этот день автоматически
+  _prefillDate = iso;
+}
+let _prefillDate = null;
+let isAdmin = false;
+
+// ══════════════════════════════════════════════════════════════
+//  НОВАЯ ЗАПИСЬ (оригинальная логика, без изменений)
+// ══════════════════════════════════════════════════════════════
+const state = { step:1, slots:[], selectedDate:null, selectedSlotId:null };
+
+async function loadSlots(){
+  document.getElementById('loaderSlots').style.display='flex';
+  document.getElementById('dayScroll').innerHTML='';
+  document.getElementById('timeGrid').innerHTML='';
+  try {
+    const res=await fetch('/api/slots');
+    const data=await res.json();
+    state.slots=data.slots||[];
+    renderDays();
+  } catch(e){ toast('Не удалось загрузить слоты','error'); }
+  finally { document.getElementById('loaderSlots').style.display='none'; }
+}
+
+function renderDays(){
+  const scroll=document.getElementById('dayScroll');
+  scroll.innerHTML='';
+  const dates=[...new Set(state.slots.map(s=>s.slot_date))].sort();
+  if(!dates.length){
+    scroll.innerHTML='<div class="empty-state" style="width:100%"><div class="emoji">🌷</div>Свободных дат пока нет</div>';
     return;
   }
-
-  dates.forEach(d => {
-    const lbl = formatDateLabel(d);
-    const card = document.createElement('div');
-    card.className = 'day-card has-slots' + (state.selectedDate === d ? ' selected' : '');
-    card.innerHTML = `<div class="wd">${lbl.wd}</div><div class="num">${lbl.num}</div><div class="mo">${lbl.mo}</div>`;
-    card.onclick = () => selectDay(d);
-    dayScroll.appendChild(card);
+  if(_prefillDate && dates.includes(_prefillDate)){
+    state.selectedDate=_prefillDate; _prefillDate=null;
+  }
+  dates.forEach(d=>{
+    const lbl=fmtLabel(d);
+    const card=document.createElement('div');
+    card.className='day-card has-slots'+(state.selectedDate===d?' selected':'');
+    card.innerHTML=`<div class="wd">${lbl.wd}</div><div class="num">${lbl.num}</div><div class="mo">${lbl.mo}</div>`;
+    card.onclick=()=>{ state.selectedDate=d; state.selectedSlotId=null; renderDays(); renderTimes(); updateMainBtn(); };
+    scroll.appendChild(card);
   });
-
-  if (!state.selectedDate && dates.length) selectDay(dates[0]);
-}
-
-function selectDay(d) {
-  state.selectedDate = d;
-  state.selectedSlotId = null;
-  renderDays();
+  if(!state.selectedDate && dates.length){ state.selectedDate=dates[0]; renderDays(); }
   renderTimes();
-  updateMainBtn();
 }
 
-function renderTimes() {
-  const grid = document.getElementById('timeGrid');
-  const label = document.getElementById('timeLabel');
-  grid.innerHTML = '';
-  const daySlots = state.slots.filter(s => s.slot_date === state.selectedDate);
-  if (!daySlots.length) { label.style.display = 'none'; return; }
-  label.style.display = '';
-  daySlots.forEach(s => {
-    const el = document.createElement('div');
-    el.className = 'time-slot' + (state.selectedSlotId === s.id ? ' selected' : '');
-    el.textContent = s.slot_time;
-    el.onclick = () => { state.selectedSlotId = s.id; renderTimes(); updateMainBtn(); };
+function renderTimes(){
+  const grid=document.getElementById('timeGrid');
+  const label=document.getElementById('timeLabel');
+  grid.innerHTML='';
+  const daySlots=state.slots.filter(s=>s.slot_date===state.selectedDate);
+  if(!daySlots.length){ label.style.display='none'; return; }
+  label.style.display='';
+  daySlots.forEach(s=>{
+    const el=document.createElement('div');
+    el.className='time-slot'+(state.selectedSlotId===s.id?' selected':'');
+    el.textContent=s.slot_time;
+    el.onclick=()=>{ state.selectedSlotId=s.id; renderTimes(); updateMainBtn(); };
     grid.appendChild(el);
   });
 }
 
-function updateMainBtn() {
-  const btn = document.getElementById('mainBtn');
-  if (state.step === 1) {
-    btn.disabled = !state.selectedSlotId;
-    btn.textContent = state.selectedSlotId ? 'Продолжить' : 'Выбери время';
-  } else if (state.step === 2) {
-    btn.disabled = false;
-    btn.textContent = 'Подтвердить запись';
-  } else if (state.step === 3) {
-    btn.disabled = false;
-    btn.textContent = 'Готово';
-  }
+function updateMainBtn(){
+  const btn=document.getElementById('mainBtn');
+  if(state.step===1){ btn.disabled=!state.selectedSlotId; btn.textContent=state.selectedSlotId?'Продолжить →':'Выбери время'; }
+  else if(state.step===2){ btn.disabled=false; btn.textContent='Подтвердить запись'; }
+  else if(state.step===3){ btn.disabled=false; btn.textContent='Готово'; }
 }
 
-function goToStep(n) {
-  state.step = n;
-  ['screenDay','screenForm','screenSuccess'].forEach((id, i) => {
-    document.getElementById(id).classList.toggle('active', i === n - 1);
+function goToStep(n){
+  state.step=n;
+  ['screenDay','screenForm','screenSuccess'].forEach((id,i)=>
+    document.getElementById(id).classList.toggle('active',i===n-1));
+  ['dot1','dot2','dot3'].forEach((id,i)=>{
+    const el=document.getElementById(id); el.classList.remove('active','done');
+    if(i+1<n) el.classList.add('done');
+    if(i+1===n) el.classList.add('active');
   });
-  ['dot1','dot2','dot3'].forEach((id, i) => {
-    const el = document.getElementById(id);
-    el.classList.remove('active','done');
-    if (i + 1 < n) el.classList.add('done');
-    if (i + 1 === n) el.classList.add('active');
-  });
-  document.getElementById('bottomBar').style.display = n === 3 ? 'none' : '';
   updateMainBtn();
 }
 
-async function onMainBtn() {
-  if (state.step === 1) {
-    const slot = state.slots.find(s => s.id === state.selectedSlotId);
-    document.getElementById('formSummary').innerHTML = `
-      <div class="summary-row"><span class="k">Дата</span><span class="v">${formatDateFull(slot.slot_date)}</span></div>
-      <div class="summary-row"><span class="k">Время</span><span class="v">${slot.slot_time}</span></div>
-    `;
+async function onMainBtn(){
+  if(state.step===1){
+    const slot=state.slots.find(s=>s.id===state.selectedSlotId);
+    document.getElementById('formSummary').innerHTML=`
+      <div class="summary-row"><span class="k">Дата</span><span class="v">${fmtFull(slot.slot_date)}</span></div>
+      <div class="summary-row"><span class="k">Время</span><span class="v">${slot.slot_time}</span></div>`;
     goToStep(2);
-  } else if (state.step === 2) {
-    const btn = document.getElementById('mainBtn');
-    btn.disabled = true; btn.textContent = 'Записываю...';
+  } else if(state.step===2){
+    const btn=document.getElementById('mainBtn');
+    btn.disabled=true; btn.textContent='Сохраняю…';
     try {
-      await api('/api/book', {
-        slot_id: state.selectedSlotId,
-        service: document.getElementById('inputService').value,
-        phone: document.getElementById('inputName').value,
+      await api('/api/book',{
+        slot_id:state.selectedSlotId,
+        service:document.getElementById('inputService').value,
+        phone:document.getElementById('inputName').value,
       });
-      const slot = state.slots.find(s => s.id === state.selectedSlotId);
-      document.getElementById('successText').textContent =
-        `Запись успешно добавлена: ${formatDateFull(slot.slot_date)} в ${slot.slot_time}`;
+      const slot=state.slots.find(s=>s.id===state.selectedSlotId);
+      document.getElementById('successText').textContent=`${fmtFull(slot.slot_date)} в ${slot.slot_time} 🌸`;
       goToStep(3);
-      if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-    } catch (e) {
-      if (e.error === 'slot_taken') {
-        toast('Это время только что заняли, выбери другое', 'error');
-        goToStep(1);
-        state.selectedSlotId = null;
-        await loadSlots();
-      } else {
-        toast('Что-то пошло не так, попробуй ещё раз', 'error');
-      }
+      if(tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+    } catch(e){
+      if(e.error==='slot_taken'){ toast('Это время уже занято','error'); goToStep(1); state.selectedSlotId=null; await loadSlots(); }
+      else toast('Что-то пошло не так','error');
       updateMainBtn();
     }
-  } else if (state.step === 3) {
-    state.selectedDate = null;
-    state.selectedSlotId = null;
-    document.getElementById('inputService').value = '';
-    document.getElementById('inputName').value = '';
-    goToStep(1);
-    loadSlots();
+  } else if(state.step===3){
+    state.selectedDate=null; state.selectedSlotId=null;
+    document.getElementById('inputService').value='';
+    document.getElementById('inputName').value='';
+    goToStep(1); loadSlots();
   }
 }
 
-// ---------- мои записи ----------
-async function loadMyBookings() {
-  const list = document.getElementById('myList');
-  list.innerHTML = '<div class="loader"><div class="spin"></div></div>';
-  try {
-    const data = await api('/api/my_bookings', {});
-    state.myBookings = data.bookings || [];
+// ══════════════════════════════════════════════════════════════
+//  ПАСХАЛКА 🌸
+// ══════════════════════════════════════════════════════════════
+const EASTER = [
+  {big:'❤️',h:'я тебя очень сильна люблю',p:'проста чтобы ты знала'},
+  {big:'🌷',h:'очень важное напоминанье',p:'ты у меня самая самая красивая и я тебя очень сильно люблю'},
+  {big:'🩷',h:'секретное послание',p:'ты моя самая любмиенькая'},
+  {big:'🌸',h:'напоминание!',p:'ты любимая, всегда и без условий'},
+];
+let easterIdx = 0;
+// Кнопка пасхалки появляется только в определённое время — намекнём через title
+document.getElementById('easterBtn').title = 'pssst 🌸';
 
-    // Если зашел админ, меняем текст вкладки и шапки
-    if (data.is_admin) {
-      document.getElementById('tabMy').textContent = 'Все записи';
-      if (state.tab === 'my') {
-        document.getElementById('headerSub').textContent = 'Общий график записей';
-      }
-    }
-
-    renderMyBookings(data.is_admin); // передаем статус админа в функцию отрисовки
-  } catch (e) {
-    list.innerHTML = '<div class="empty-state"><div class="emoji">🌷</div>Не удалось загрузить записи</div>';
+function showEaster(){
+  const msg = EASTER[easterIdx++ % EASTER.length];
+  const ov = document.createElement('div');
+  ov.className='easter-overlay';
+  ov.innerHTML=`<div class="easter-box">
+    <span class="e-big">${msg.big}</span>
+    <h2>${msg.h}</h2>
+    <p>${msg.p}</p>
+    <button onclick="this.closest('.easter-overlay').remove()">Ладно 🌸</button>
+  </div>`;
+  document.body.appendChild(ov);
+  if(tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+  // сердечки
+  for(let i=0;i<14;i++){
+    const h=document.createElement('span');
+    h.textContent='💗';
+    h.style.cssText=`position:fixed;font-size:${14+Math.random()*16}px;`
+      +`left:${Math.random()*100}%;bottom:${10+Math.random()*30}%;`
+      +`animation:fall ${1.2+Math.random()*.8}s ease-out forwards;pointer-events:none;z-index:300;`
+      +`animation-delay:${Math.random()*.4}s;opacity:.9`;
+    document.body.appendChild(h);
+    setTimeout(()=>h.remove(), 2200);
   }
 }
 
-function renderMyBookings(isAdmin = false) {
-  const list = document.getElementById('myList');
-  if (!state.myBookings.length) {
-    const text = isAdmin
-      ? 'На ближайшее время активных записей нет'
-      : 'У тебя пока нет записей<br>Загляни во вкладку «Новая запись»';
-    list.innerHTML = `<div class="empty-state"><div class="emoji">🌷</div>${text}</div>`;
-    return;
-  }
-  list.innerHTML = '';
-  state.myBookings.forEach(b => {
-    const card = document.createElement('div');
-    card.className = 'booking-card';
-
-    // Если это админ, показываем имя из поля phone, если клиент — пишем просто инфо
-    const clientName = b.phone ? b.phone : 'Клиент';
-    const metaText = isAdmin ? `<b>${clientName}</b>` : `✨ ${b.service ? b.service : 'Без услуги'}`;
-
-    card.innerHTML = `
-      <div class="date">${formatDateFull(b.slot_date)}, ${b.slot_time}</div>
-      <div class="meta">
-        ${metaText}
-        ${isAdmin && b.service ? `<br>✨ Услуга: ${b.service}` : ''}
-      </div>
-      <div class="booking-actions">
-        <button class="b-resched" onclick="startReschedule(${b.id})">🔄 Перенести</button>
-        <button class="b-cancel" onclick="cancelBooking(${b.id})">❌ Отменить</button>
-      </div>
-    `;
-    list.appendChild(card);
-  });
-}
-
-async function cancelBooking(id) {
-  if (!confirm('Точно отменить эту запись?')) return;
-  try {
-    await api('/api/cancel', { booking_id: id });
-    toast('Запись отменена', 'success');
-    loadMyBookings();
-  } catch (e) {
-    toast('Не удалось отменить', 'error');
-  }
-}
-
-// ---------- перенос ----------
-async function startReschedule(bookingId) {
-  state.reschedulingBookingId = bookingId;
-  document.getElementById('flowMy').style.display = 'none';
-  document.getElementById('flowReschedule').style.display = '';
-  document.getElementById('bottomBar').style.display = 'none';
-
-  const res = await fetch(API + '/api/slots');
-  const data = await res.json();
-  const slots = data.slots || [];
-  const dates = [...new Set(slots.map(s => s.slot_date))].sort();
-  const dayScroll = document.getElementById('reschedDayScroll');
-  dayScroll.innerHTML = '';
-
-  if (!dates.length) {
-    dayScroll.innerHTML = '<div class="empty-state" style="width:100%">Свободных слотов нет</div>';
-    return;
-  }
-
-  let selDate = dates[0];
-  function renderReschedDays() {
-    dayScroll.innerHTML = '';
-    dates.forEach(d => {
-      const lbl = formatDateLabel(d);
-      const card = document.createElement('div');
-      card.className = 'day-card has-slots' + (selDate === d ? ' selected' : '');
-      card.innerHTML = `<div class="wd">${lbl.wd}</div><div class="num">${lbl.num}</div><div class="mo">${lbl.mo}</div>`;
-      card.onclick = () => { selDate = d; renderReschedDays(); renderReschedTimes(); };
-      dayScroll.appendChild(card);
-    });
-  }
-  function renderReschedTimes() {
-    const grid = document.getElementById('reschedTimeGrid');
-    const label = document.getElementById('reschedTimeLabel');
-    grid.innerHTML = '';
-    const daySlots = slots.filter(s => s.slot_date === selDate);
-    if (!daySlots.length) { label.style.display = 'none'; return; }
-    label.style.display = '';
-    daySlots.forEach(s => {
-      const el = document.createElement('div');
-      el.className = 'time-slot';
-      el.textContent = s.slot_time;
-      el.onclick = async () => {
-        try {
-          await api('/api/reschedule', { booking_id: bookingId, new_slot_id: s.id });
-          toast('Перенесено!', 'success');
-          backToMy();
-        } catch (e) {
-          toast(e.error === 'slot_taken' ? 'Это время уже заняли' : 'Не удалось перенести', 'error');
-        }
-      };
-      grid.appendChild(el);
-    });
-  }
-  renderReschedDays();
-  renderReschedTimes();
-}
-
-function backToMy() {
-  document.getElementById('flowReschedule').style.display = 'none';
-  document.getElementById('flowMy').style.display = '';
-  loadMyBookings();
-}
-
-// ---------- init ----------
-loadSlots();
+// ── init ──────────────────────────────────────────────────────────────────────
+renderCalendar();
 </script>
 </body>
 </html>
