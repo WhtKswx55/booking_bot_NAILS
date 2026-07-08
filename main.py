@@ -403,6 +403,29 @@ async def api_reschedule_booking(request: web.Request):
     return web.json_response({"ok": True})
 
 
+async def api_update_note(request: web.Request):
+    body = await request.json()
+    user = require_valid_user(request, body)
+
+    if not user:
+        return web.json_response({"error": "unauthorized"}, status=401)
+
+    # Разрешаем обновлять заметки только админам
+    if not is_admin(user["id"]):
+        return web.json_response({"error": "forbidden"}, status=403)
+
+    booking_id = body.get("booking_id")
+    note = body.get("note", "")
+
+    if not booking_id:
+        return web.json_response({"error": "booking_id required"}, status=400)
+
+    # Вызываем функцию, которую создадим в database.py
+    await db.update_booking_note(booking_id, note)
+
+    return web.json_response({"ok": True})
+
+
 async def healthcheck(request: web.Request):
     return web.json_response({"status": "ok", "time": datetime.now().isoformat()})
 
@@ -415,6 +438,7 @@ def create_app() -> web.Application:
     app.router.add_post("/api/book", api_create_booking)
     app.router.add_post("/api/cancel", api_cancel_booking)
     app.router.add_post("/api/reschedule", api_reschedule_booking)
+    app.router.add_post("/api/update_note", api_update_note)
     app.router.add_static("/webapp/", path="webapp", name="webapp", show_index=True)
     return app
 

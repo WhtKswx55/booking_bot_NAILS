@@ -1,13 +1,8 @@
 """
-database.py — слой работы с SQLite.
-
-Хранит:
- - slots: доступные временные слоты (дата+время), статус (free/booked)
- - bookings: записи клиенток на слот, статус (active/cancelled)
- - clients: кэш клиенток (для истории/админки)
+database.py — слой работы с SQLite с поддержкой заметок и защитой от гонок.
 """
 import aiosqlite
-from datetime import datetime, date, time
+from datetime import datetime
 from contextlib import asynccontextmanager
 
 DB_PATH = "booking.db"
@@ -32,6 +27,7 @@ CREATE TABLE IF NOT EXISTS bookings (
     status TEXT NOT NULL DEFAULT 'active',   -- active / cancelled
     created_at TEXT NOT NULL,
     reminded INTEGER NOT NULL DEFAULT 0,
+    note TEXT,                               -- Поле для заметок администратора
     FOREIGN KEY(slot_id) REFERENCES slots(id)
 );
 
@@ -42,6 +38,11 @@ CREATE TABLE IF NOT EXISTS clients (
     phone TEXT,
     first_seen TEXT
 );
+
+-- Индексы для мгновенного поиска
+CREATE INDEX IF NOT EXISTS idx_slots_date ON slots(slot_date);
+CREATE INDEX IF NOT EXISTS idx_bookings_client ON bookings(client_tg_id);
+CREATE INDEX IF NOT EXISTS idx_bookings_status ON bookings(status);
 """
 
 
@@ -49,6 +50,7 @@ CREATE TABLE IF NOT EXISTS clients (
 async def get_db():
     db = await aiosqlite.connect(DB_PATH)
     db.row_factory = aiosqlite.Row
+    await db.execute("PRAGMA foreign_keys = ON;")  # Включаем внешние ключи
     try:
         yield db
     finally:
@@ -73,24 +75,17 @@ async def add_slot(slot_date: str, slot_time: str):
             await db.commit()
             return True
         except aiosqlite.IntegrityError:
-            return False  # уже существует
+            return False
 
 
 async def add_slots_bulk(slots: list[tuple[str, str]]):
-    """slots: список (date, time)"""
-    added = 0
     async with get_db() as db:
-        for d, t in slots:
-            try:
-                await db.execute(
-                    "INSERT INTO slots (slot_date, slot_time, is_booked) VALUES (?, ?, 0)",
-                    (d, t),
-                )
-                added += 1
-            except aiosqlite.IntegrityError:
-                continue
+        cur = await db.executemany(
+            "INSERT OR IGNORE INTO slots (slot_date, slot_time, is_booked) VALUES (?, ?, 0)",
+            slots
+        )
         await db.commit()
-    return added
+        return cur.rowcount
 
 
 async def get_free_slots(from_date: str | None = None) -> list[dict]:
@@ -158,13 +153,15 @@ async def create_booking(
     slot_id: int, client_tg_id: int, client_name: str, client_username: str | None,
     service: str | None = None, phone: str | None = None
 ) -> int | None:
-    """Возвращает booking_id, либо None если слот уже занят (гонка)."""
+    """Атомарно занимает слот и создает бронь (защита от гонки)."""
     async with get_db() as db:
-        cur = await db.execute("SELECT is_booked FROM slots WHERE id = ?", (slot_id,))
-        row = await cur.fetchone()
-        if not row or row["is_booked"]:
+        cur = await db.execute(
+            "UPDATE slots SET is_booked = 1 WHERE id = ? AND is_booked = 0",
+            (slot_id,)
+        )
+        if cur.rowcount == 0:
             return None
-        await db.execute("UPDATE slots SET is_booked = 1 WHERE id = ?", (slot_id,))
+
         cur = await db.execute(
             """INSERT INTO bookings
                (slot_id, client_tg_id, client_name, client_username, service, phone, status, created_at)
@@ -213,20 +210,22 @@ async def cancel_booking(booking_id: int):
 
 
 async def reschedule_booking(booking_id: int, new_slot_id: int) -> bool:
-    """Переносит запись на новый слот. Возвращает False если новый слот занят."""
+    """Атомарный перенос брони на новый слот."""
     booking = await get_booking(booking_id)
     if not booking:
         return False
     async with get_db() as db:
-        cur = await db.execute("SELECT is_booked FROM slots WHERE id = ?", (new_slot_id,))
-        row = await cur.fetchone()
-        if not row or row["is_booked"]:
+        cur = await db.execute(
+            "UPDATE slots SET is_booked = 1 WHERE id = ? AND is_booked = 0",
+            (new_slot_id,)
+        )
+        if cur.rowcount == 0:
             return False
-        # освобождаем старый слот, занимаем новый
+
         await db.execute("UPDATE slots SET is_booked = 0 WHERE id = ?", (booking["slot_id"],))
-        await db.execute("UPDATE slots SET is_booked = 1 WHERE id = ?", (new_slot_id,))
         await db.execute(
-            "UPDATE bookings SET slot_id = ?, reminded = 0 WHERE id = ?", (new_slot_id, booking_id)
+            "UPDATE bookings SET slot_id = ?, reminded = 0 WHERE id = ?",
+            (new_slot_id, booking_id)
         )
         await db.commit()
     return True
@@ -248,7 +247,6 @@ async def get_all_active_bookings(from_date: str | None = None) -> list[dict]:
 
 
 async def get_bookings_needing_reminder(target_date: str) -> list[dict]:
-    """Активные записи на target_date, по которым ещё не отправлено напоминание."""
     async with get_db() as db:
         cur = await db.execute(
             """SELECT b.*, s.slot_date, s.slot_time
@@ -263,4 +261,11 @@ async def get_bookings_needing_reminder(target_date: str) -> list[dict]:
 async def mark_reminded(booking_id: int):
     async with get_db() as db:
         await db.execute("UPDATE bookings SET reminded = 1 WHERE id = ?", (booking_id,))
+        await db.commit()
+
+
+async def update_booking_note(booking_id: int, note: str):
+    """Обновляет текст заметки для конкретного бронирования."""
+    async with get_db() as db:
+        await db.execute("UPDATE bookings SET note = ? WHERE id = ?", (note, booking_id))
         await db.commit()
