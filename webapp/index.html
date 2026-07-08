@@ -35,7 +35,7 @@ header p{margin:0;color:var(--soft);font-size:13px;}
 
 main{padding:0 16px;max-width:480px;margin:0 auto;}
 
-/* ── ВКЛАДКА: НОВАЯ ЗАПИСЬ (оригинальная логика) ── */
+/* ── ВКЛАДКА: НОВАЯ ЗАПИСЬ ── */
 .section-label{font-size:12px;color:var(--soft);text-transform:uppercase;
   letter-spacing:.08em;margin:18px 2px 10px;font-weight:700;}
 
@@ -74,11 +74,12 @@ main{padding:0 16px;max-width:480px;margin:0 auto;}
 
 .field{margin-bottom:14px;}
 .field label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:var(--soft);}
-.field input{
+.field input, .field textarea {
   width:100%;padding:13px 14px;border-radius:14px;border:1.5px solid var(--line);
   background:var(--card);font-family:inherit;font-size:15px;color:var(--ink);outline:none;transition:border-color .15s;
 }
-.field input:focus{border-color:var(--rose);}
+.field textarea { resize:vertical; }
+.field input:focus, .field textarea:focus {border-color:var(--rose);}
 
 .summary-card{background:var(--card);border-radius:var(--r);padding:18px;box-shadow:var(--shadow);margin-bottom:18px;}
 .summary-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;font-size:15px;}
@@ -145,13 +146,15 @@ main{padding:0 16px;max-width:480px;margin:0 auto;}
 }
 .bcard-time{font-weight:700;font-size:15px;color:var(--deep);margin-bottom:2px;}
 .bcard-name{font-size:16px;font-weight:600;margin-bottom:2px;}
-.bcard-meta{font-size:13px;color:var(--soft);}
-.bcard-actions{display:flex;gap:8px;margin-top:10px;}
+.bcard-meta{font-size:13px;color:var(--soft);line-height:1.4;margin-bottom:4px;}
+.bcard-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
 .bcard-actions button{
   flex:1;padding:9px;border-radius:11px;border:1.5px solid var(--line);
-  background:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;
+  background:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;
+  min-width:30%;
 }
 .bcard-actions .b-rs{color:var(--deep);border-color:var(--pale);}
+.bcard-actions .b-nt{color:var(--ok);border-color:#d4e3d0;}
 .bcard-actions .b-cx{color:var(--bad);border-color:#f0d6d6;}
 
 .add-day-btn{
@@ -160,7 +163,7 @@ main{padding:0 16px;max-width:480px;margin:0 auto;}
 }
 .add-day-btn:hover{background:var(--pale);}
 
-/* ── ПЕРЕНОС-МОДАЛКА ── */
+/* ── МОДАЛКИ (ПЕРЕНОС И ЗАМЕТКИ) ── */
 .modal-bg{
   position:fixed;inset:0;background:rgba(59,42,46,.45);z-index:50;
   display:flex;align-items:flex-end;animation:mfade .2s;
@@ -267,7 +270,7 @@ main{padding:0 16px;max-width:480px;margin:0 auto;}
     <div class="screen" id="screenForm">
       <div class="summary-card" id="formSummary"></div>
       <div class="field"><label>Имя клиента</label><input type="text" id="inputName" placeholder="Имя"></div>
-      <div class="field"><label>Услуга (необязательно)</label><input type="text" id="inputService" placeholder="Маникюр"></div>
+      <div class="field"><label>Заметка (необязательно)</label><input type="text" id="inputNote" placeholder="Например, дизайн со стразами..."></div>
     </div>
 
     <div class="screen" id="screenSuccess">
@@ -288,7 +291,7 @@ main{padding:0 16px;max-width:480px;margin:0 auto;}
 </div>
 
 <!-- пасхалка -->
-<button class="easter-btn" id="easterBtn" onclick="showEaster()" title="">🌸</button>
+<button class="easter-btn" id="easterBtn" onclick="showEaster()" title="pssst 🌸">🌸</button>
 
 <div class="toast" id="toast"></div>
 
@@ -359,7 +362,7 @@ function showTab(t) {
 let calYear  = new Date().getFullYear();
 let calMonth = new Date().getMonth()+1;
 let selectedDay = null;
-let allBookings = [];   // все активные записи, загруженные с сервера
+let allBookings = [];
 
 async function loadBookings() {
   try {
@@ -382,13 +385,12 @@ async function renderCalendar() {
   const grid = document.getElementById('calGrid');
   grid.innerHTML = '';
 
-  // Заголовок дней недели
   RU_WD.forEach(w => {
     const el=document.createElement('div'); el.className='cal-wd'; el.textContent=w; grid.appendChild(el);
   });
 
   const firstDay = new Date(calYear, calMonth-1, 1);
-  const startDow = (firstDay.getDay()+6)%7; // пн=0
+  const startDow = (firstDay.getDay()+6)%7;
   const daysInMonth = new Date(calYear, calMonth, 0).getDate();
   const today = todayIso();
 
@@ -432,20 +434,23 @@ function renderDayPanel(){
   } else {
     dayBookings.forEach(b=>{
       const name = b.phone || b.client_name || 'Клиент';
-      const meta = [b.service, b.client_username ? '@'+b.client_username : null].filter(Boolean).join(' · ');
+
+      // Показываем заметку вместо услуги, если она есть.
+      const metaText = [b.note, b.client_username ? '@'+b.client_username : null].filter(Boolean).join(' · ');
+
       html+=`<div class="bcard" id="bc-${b.id}">
         <div class="bcard-time">${b.slot_time}</div>
         <div class="bcard-name">${esc(name)}</div>
-        ${meta ? `<div class="bcard-meta">${esc(meta)}</div>` : ''}
+        ${metaText ? `<div class="bcard-meta">${esc(metaText)}</div>` : ''}
         <div class="bcard-actions">
-          <button class="b-rs" onclick="openResched(${b.id},'${b.slot_date}','${b.slot_time}')">🔄 Перенести</button>
-          <button class="b-cx" onclick="cancelBooking(${b.id})">❌ Отменить</button>
+          <button class="b-rs" onclick="openResched(${b.id},'${b.slot_date}','${b.slot_time}')">🔄 Время</button>
+          <button class="b-nt" onclick="openEditNote(${b.id})">📝 Заметка</button>
+          <button class="b-cx" onclick="cancelBooking(${b.id})">❌ Отмена</button>
         </div>
       </div>`;
     });
   }
 
-  // кнопка добавить запись на этот день — только для админов
   if(isAdmin){
     html+=`<button class="add-day-btn" onclick="prefillNewBooking('${selectedDay}')">+ Добавить запись на этот день</button>`;
   }
@@ -462,6 +467,47 @@ async function cancelBooking(id){
     allBookings = allBookings.filter(b=>b.id!==id);
     renderCalendar();
   } catch(e){ toast('Не удалось отменить','error'); }
+}
+
+// ── Изменение/добавление заметки ─────────────────────────────────────────────
+function openEditNote(id) {
+  const b = allBookings.find(x => x.id === id);
+  if(!b) return;
+
+  const m = document.createElement('div');
+  m.className = 'modal-bg';
+  m.id = 'noteModal';
+  m.innerHTML = `<div class="modal-box">
+    <button class="modal-close" onclick="closeNoteModal()">×</button>
+    <h3>Заметка к записи</h3>
+    <div class="field">
+      <label>Текст заметки</label>
+      <textarea id="rNote" rows="3" placeholder="Введите заметку...">${esc(b.note || '')}</textarea>
+    </div>
+    <button class="btn btn-primary" style="margin-top:14px" onclick="submitNote(${id})">Сохранить 📝</button>
+  </div>`;
+  document.body.appendChild(m);
+}
+
+function closeNoteModal() {
+  document.getElementById('noteModal')?.remove();
+}
+
+async function submitNote(id) {
+  const newNote = document.getElementById('rNote').value;
+  try {
+    await api('/api/update_note', { booking_id: id, note: newNote });
+    toast('Заметка сохранена', 'success');
+
+    // Обновляем локально и перерисовываем карточки
+    const b = allBookings.find(x => x.id === id);
+    if(b) b.note = newNote;
+
+    closeNoteModal();
+    renderDayPanel();
+  } catch(e) {
+    toast('Не удалось сохранить', 'error');
+  }
 }
 
 // ── Перенос через модалку ────────────────────────────────────────────────────
@@ -499,7 +545,7 @@ async function submitResched(){
   const nt = document.getElementById('rTime').value;
   if(!nd||!nt){ toast('Укажи дату и время','error'); return; }
   try {
-    await api('/api/reschedule',{booking_id:reschedId, new_slot_id:nt}); // примечание ниже
+    await api('/api/reschedule',{booking_id:reschedId, new_slot_id:nt});
     toast('Перенесено! 🔄','success');
     closeModal();
     selectedDay=nd;
@@ -511,14 +557,13 @@ async function submitResched(){
 // ── Быстрый переход к добавлению на конкретный день ──────────────────────────
 function prefillNewBooking(iso){
   showTab('new');
-  // после загрузки слотов выберем этот день автоматически
   _prefillDate = iso;
 }
 let _prefillDate = null;
 let isAdmin = false;
 
 // ══════════════════════════════════════════════════════════════
-//  НОВАЯ ЗАПИСЬ (оригинальная логика, без изменений)
+//  НОВАЯ ЗАПИСЬ
 // ══════════════════════════════════════════════════════════════
 const state = { step:1, slots:[], selectedDate:null, selectedSlotId:null };
 
@@ -606,7 +651,7 @@ async function onMainBtn(){
     try {
       await api('/api/book',{
         slot_id:state.selectedSlotId,
-        service:document.getElementById('inputService').value,
+        note:document.getElementById('inputNote').value,
         phone:document.getElementById('inputName').value,
       });
       const slot=state.slots.find(s=>s.id===state.selectedSlotId);
@@ -620,7 +665,7 @@ async function onMainBtn(){
     }
   } else if(state.step===3){
     state.selectedDate=null; state.selectedSlotId=null;
-    document.getElementById('inputService').value='';
+    document.getElementById('inputNote').value='';
     document.getElementById('inputName').value='';
     goToStep(1); loadSlots();
   }
@@ -636,7 +681,6 @@ const EASTER = [
   {big:'🌸',h:'напоминание!',p:'ты любимая, всегда и без условий'},
 ];
 let easterIdx = 0;
-// Кнопка пасхалки появляется только в определённое время — намекнём через title
 document.getElementById('easterBtn').title = 'pssst 🌸';
 
 function showEaster(){
@@ -651,7 +695,6 @@ function showEaster(){
   </div>`;
   document.body.appendChild(ov);
   if(tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
-  // сердечки
   for(let i=0;i<14;i++){
     const h=document.createElement('span');
     h.textContent='💗';
